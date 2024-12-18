@@ -4,6 +4,7 @@ export const processSchema = z.object({
   id: z.string().uuid().optional(),
   number: z.string().min(1, 'Número do processo é obrigatório'),
   clientId: z.string().uuid('Cliente é obrigatório'),
+  responsibleId: z.string().uuid('Responsável é obrigatório'),
   type: z.enum(['CIVIL', 'CRIMINAL', 'LABOR', 'TAX', 'OTHER']),
   subject: z.string().min(3, 'Assunto é obrigatório'),
   description: z.string().optional(),

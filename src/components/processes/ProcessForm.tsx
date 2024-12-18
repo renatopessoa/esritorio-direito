@@ -2,11 +2,13 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { HelpCircle } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { processSchema, type Process } from '../../types/process';
 import { useClientStore } from '../../stores/useClientStore';
+import { useUserStore } from '../../stores/useUserStore';
 
 interface ProcessFormProps {
   initialData?: Partial<Process>;
@@ -15,6 +17,7 @@ interface ProcessFormProps {
 
 export function ProcessForm({ initialData, onSubmit }: ProcessFormProps) {
   const clients = useClientStore((state) => state.clients);
+  const activeUsers = useUserStore((state) => state.getActiveUsers());
   
   const {
     register,
@@ -149,6 +152,34 @@ export function ProcessForm({ initialData, onSubmit }: ProcessFormProps) {
                 <option value="MEDIUM">Média</option>
                 <option value="HIGH">Alta</option>
               </select>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <label className="block text-sm font-medium text-gray-300">
+                  Responsável pelo Processo
+                </label>
+                <div className="group relative">
+                  <HelpCircle className="w-4 h-4 text-gray-400" />
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-gray-800 rounded-lg text-xs text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                    Usuário que responderá pelo andamento do processo
+                  </div>
+                </div>
+              </div>
+              <select
+                className="input-dark w-full"
+                {...register('responsibleId')}
+              >
+                <option value="">Selecione um responsável</option>
+                {activeUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name} - {user.position} ({user.registration})
+                  </option>
+                ))}
+              </select>
+              {errors.responsibleId && (
+                <p className="text-sm text-red-400">{errors.responsibleId.message}</p>
+              )}
             </div>
           </div>
         </div>

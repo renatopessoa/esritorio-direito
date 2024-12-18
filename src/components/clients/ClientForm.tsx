@@ -1,19 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
+import { FileUpload } from '../upload/FileUpload';
 import { clientSchema, type Client } from '../../types/client';
 import { maskCPF, maskCNPJ, maskPhone, maskCEP } from '../../utils/masks';
+import { searchAddressByCep } from '../../services/viaCep';
 
 interface ClientFormProps {
   initialData?: Partial<Client>;
   onSubmit: (data: Client) => Promise<void>;
+  onCancel: () => void;
 }
 
-export function ClientForm({ initialData, onSubmit }: ClientFormProps) {
+export function ClientForm({ initialData, onSubmit, onCancel }: ClientFormProps) {
   const {
     register,
     handleSubmit,
@@ -26,6 +29,7 @@ export function ClientForm({ initialData, onSubmit }: ClientFormProps) {
   });
 
   const documentId = watch('documentId');
+  const cep = watch('address.zipCode');
 
   const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
@@ -37,7 +41,44 @@ export function ClientForm({ initialData, onSubmit }: ClientFormProps) {
   };
 
   const handleCEPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue('address.zipCode', maskCEP(e.target.value));
+    const value = e.target.value.replace(/\D/g, '');
+    setValue('address.zipCode', maskCEP(value));
+  };
+
+  useEffect(() => {
+    async function fetchAddress() {
+      if (cep?.length === 8) {
+        try {
+          const address = await searchAddressByCep(cep);
+          setValue('address.street', address.logradouro);
+          setValue('address.neighborhood', address.bairro);
+          setValue('address.city', address.localidade);
+          setValue('address.state', address.uf);
+        } catch (error) {
+          toast.error('CEP não encontrado');
+        }
+      }
+    }
+    fetchAddress();
+  }, [cep, setValue]);
+
+  const handleUploadDocuments = async (files: File[]) => {
+    try {
+      // Aqui você implementaria a lógica real de upload
+      const uploadedDocs = files.map(file => ({
+        id: crypto.randomUUID(),
+        name: file.name,
+        url: URL.createObjectURL(file),
+        type: file.type,
+        size: file.size,
+        uploadedAt: new Date(),
+      }));
+
+      setValue('documents', uploadedDocs);
+      toast.success('Documentos anexados com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao anexar documentos');
+    }
   };
 
   const handleFormSubmit = async (data: Client) => {
@@ -58,78 +99,98 @@ export function ClientForm({ initialData, onSubmit }: ClientFormProps) {
             error={errors.name?.message}
             {...register('name')}
           />
+          
           <Input
             label="CPF/CNPJ"
-            error={errors.documentId?.message}
             value={documentId}
             onChange={handleDocumentChange}
+            error={errors.documentId?.message}
           />
+          
           <Input
             label="Email"
             type="email"
             error={errors.email?.message}
             {...register('email')}
           />
+          
           <Input
             label="Telefone"
+            onChange={handlePhoneChange}
             error={errors.phone?.message}
             {...register('phone')}
-            onChange={handlePhoneChange}
           />
         </div>
       </Card>
 
       <Card title="Endereço">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             label="CEP"
+            onChange={handleCEPChange}
             error={errors.address?.zipCode?.message}
             {...register('address.zipCode')}
-            onChange={handleCEPChange}
           />
-          <Input
-            label="Rua"
-            error={errors.address?.street?.message}
-            {...register('address.street')}
-          />
+          
+          <div className="md:col-span-2">
+            <Input
+              label="Rua"
+              error={errors.address?.street?.message}
+              {...register('address.street')}
+            />
+          </div>
+          
           <Input
             label="Número"
             error={errors.address?.number?.message}
             {...register('address.number')}
           />
+          
           <Input
             label="Complemento"
             {...register('address.complement')}
           />
+          
           <Input
             label="Bairro"
             error={errors.address?.neighborhood?.message}
             {...register('address.neighborhood')}
           />
+          
           <Input
             label="Cidade"
             error={errors.address?.city?.message}
             {...register('address.city')}
           />
+          
           <Input
             label="Estado"
-            error={errors.address?.state?.message}
             maxLength={2}
+            error={errors.address?.state?.message}
             {...register('address.state')}
           />
         </div>
       </Card>
 
+      <Card title="Documentos">
+        <FileUpload
+          onUpload={handleUploadDocuments}
+          maxFiles={5}
+          maxSize={10 * 1024 * 1024} // 10MB
+          accept=".pdf,.jpg,.jpeg,.png"
+        />
+      </Card>
+
       <Card title="Observações">
         <textarea
           className="input-dark w-full h-32 resize-none"
-          placeholder="Observações sobre o cliente..."
+          placeholder="Observações adicionais sobre o cliente..."
           {...register('notes')}
         />
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline">
+        <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
         <Button type="submit" disabled={isSubmitting}>

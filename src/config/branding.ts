@@ -1,5 +1,5 @@
 export const branding = {
-  name: 'Wiviany Melo',
+  name: 'Florentino Melo',
   shortName: 'VM',
   description: 'Sistema de Gestão Jurídica',
   primaryColor: 'from-blue-400 to-purple-400',

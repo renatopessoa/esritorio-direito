@@ -30,31 +30,31 @@ function DashboardCard({ icon, title, value, color }: DashboardCardProps) {
 export default function Dashboard() {
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6 text-white">Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-6 text-white"></h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <DashboardCard
           icon={<Briefcase className="w-8 h-8" />}
           title="Processos Ativos"
-          value="24"
+          value=""
           color="bg-blue-500"
         />
         <DashboardCard
           icon={<Clock className="w-8 h-8" />}
           title="Prazos Próximos"
-          value="8"
+          value=""
           color="bg-yellow-500"
         />
         <DashboardCard
           icon={<AlertCircle className="w-8 h-8" />}
           title="Audiências Hoje"
-          value="3"
+          value=""
           color="bg-red-500"
         />
         <DashboardCard
           icon={<DollarSign className="w-8 h-8" />}
           title="Faturamento Mensal"
-          value="R$ 45.000"
+          value="R$ 0.00"
           color="bg-green-500"
         />
       </div>
@@ -65,8 +65,8 @@ export default function Dashboard() {
             <div className="flex items-center gap-4 p-4 glass-card rounded-lg">
               <CalendarIcon className="w-10 h-10 text-blue-400" />
               <div>
-                <h4 className="font-medium text-white">Audiência - Processo 1234</h4>
-                <p className="text-gray-400">Hoje às 14:00 - Vara Civil</p>
+                <h4 className="font-medium text-white"></h4>
+                <p className="text-gray-400"></p>
               </div>
             </div>
           </div>
@@ -77,8 +77,8 @@ export default function Dashboard() {
             <div className="flex items-center gap-4 p-4 glass-card rounded-lg">
               <Clock className="w-10 h-10 text-yellow-400" />
               <div>
-                <h4 className="font-medium text-white">Recurso - Processo 5678</h4>
-                <p className="text-gray-400">Vence em 3 dias</p>
+                <h4 className="font-medium text-white"></h4>
+                <p className="text-gray-400"></p>
               </div>
             </div>
           </div>
