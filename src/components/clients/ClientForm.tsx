@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
+import { supabase } from '../../supabaseClient';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -23,10 +24,13 @@ export function ClientForm({ initialData, onSubmit, onCancel }: ClientFormProps)
     watch,
     setValue,
     formState: { errors, isSubmitting },
+    reset,
   } = useForm<Client>({
     resolver: zodResolver(clientSchema),
     defaultValues: initialData,
   });
+
+  const [isSubmittingState, setIsSubmittingState] = useState(false);
 
   const documentId = watch('documentId');
   const cep = watch('address.zipCode');
@@ -82,11 +86,29 @@ export function ClientForm({ initialData, onSubmit, onCancel }: ClientFormProps)
   };
 
   const handleFormSubmit = async (data: Client) => {
+    setIsSubmittingState(true);
     try {
-      await onSubmit(data);
+      const { error } = await supabase
+        .from('clients')
+        .insert([
+          {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            documents: data.documents
+          }
+        ]);
+
+      if (error) throw error;
+
       toast.success('Cliente salvo com sucesso!');
+      reset(); // Reset form after successful submission
     } catch (error) {
+      console.error('Erro ao salvar cliente:', error);
       toast.error('Erro ao salvar cliente');
+    } finally {
+      setIsSubmittingState(false);
     }
   };
 
@@ -96,29 +118,34 @@ export function ClientForm({ initialData, onSubmit, onCancel }: ClientFormProps)
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label="Nome Completo"
-            error={errors.name?.message}
-            {...register('name')}
+            error={!!errors.name?.message}
+            {...register('name', { required: 'Nome é obrigatório' })}
           />
           
           <Input
             label="CPF/CNPJ"
-            value={documentId}
-            onChange={handleDocumentChange}
-            error={errors.documentId?.message}
+            value={documentId || ''}
+            error={!!errors.documentId?.message}
+            {...register('documentId', { 
+              required: 'CPF/CNPJ é obrigatório',
+              onChange: handleDocumentChange 
+            })}
           />
           
           <Input
             label="Email"
             type="email"
-            error={errors.email?.message}
-            {...register('email')}
+            error={!!errors.email?.message}
+            {...register('email', { required: 'Email é obrigatório' })}
           />
           
           <Input
             label="Telefone"
-            onChange={handlePhoneChange}
-            error={errors.phone?.message}
-            {...register('phone')}
+            error={!!errors.phone?.message}
+            {...register('phone', { 
+              required: 'Telefone é obrigatório',
+              onChange: handlePhoneChange 
+            })}
           />
         </div>
       </Card>
@@ -127,22 +154,21 @@ export function ClientForm({ initialData, onSubmit, onCancel }: ClientFormProps)
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             label="CEP"
-            onChange={handleCEPChange}
-            error={errors.address?.zipCode?.message}
-            {...register('address.zipCode')}
+            error={!!errors.address?.zipCode?.message}
+            {...register('address.zipCode', { onChange: handleCEPChange })}
           />
           
           <div className="md:col-span-2">
             <Input
               label="Rua"
-              error={errors.address?.street?.message}
+              error={!!errors.address?.street?.message}
               {...register('address.street')}
             />
           </div>
           
           <Input
             label="Número"
-            error={errors.address?.number?.message}
+            error={!!errors.address?.number?.message}
             {...register('address.number')}
           />
           
@@ -153,20 +179,20 @@ export function ClientForm({ initialData, onSubmit, onCancel }: ClientFormProps)
           
           <Input
             label="Bairro"
-            error={errors.address?.neighborhood?.message}
+            error={!!errors.address?.neighborhood?.message}
             {...register('address.neighborhood')}
           />
           
           <Input
             label="Cidade"
-            error={errors.address?.city?.message}
+            error={!!errors.address?.city?.message}
             {...register('address.city')}
           />
           
           <Input
             label="Estado"
             maxLength={2}
-            error={errors.address?.state?.message}
+            error={!!errors.address?.state?.message}
             {...register('address.state')}
           />
         </div>
@@ -193,8 +219,8 @@ export function ClientForm({ initialData, onSubmit, onCancel }: ClientFormProps)
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Salvando...' : 'Salvar Cliente'}
+        <Button type="submit" disabled={isSubmittingState}>
+          {isSubmittingState ? 'Salvando...' : 'Salvar Cliente'}
         </Button>
       </div>
     </form>
