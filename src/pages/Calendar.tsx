@@ -1,37 +1,78 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus } from 'lucide-react';
+import { Button } from '../components/ui/Button';
+import { CalendarHeader } from '../components/calendar/CalendarHeader';
+import { MonthView } from '../components/calendar/MonthView';
+import { EventForm } from '../components/calendar/EventForm';
+import type { ViewMode, CalendarEvent } from '../types/calendar';
+import { toast } from 'sonner';
 
 export default function Calendar() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+
+  const handlePrevious = () => {
+    // Implement previous navigation based on viewMode
+  };
+
+  const handleNext = () => {
+    // Implement next navigation based on viewMode
+  };
+
+  const handleToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  const handleEventSubmit = async (data: CalendarEvent) => {
+    try {
+      // Implement event creation/update
+      toast.success('Compromisso salvo com sucesso!');
+      setIsFormOpen(false);
+    } catch (error) {
+      toast.error('Erro ao salvar compromisso');
+    }
+  };
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Agenda</h1>
-        <div className="flex items-center space-x-4">
-          <button className="bg-gray-100 p-2 rounded-lg">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <span className="text-lg font-medium">Março 2024</span>
-          <button className="bg-gray-100 p-2 rounded-lg">
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <CalendarHeader
+          currentDate={currentDate}
+          viewMode={viewMode}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onToday={handleToday}
+          onViewModeChange={setViewMode}
+        />
+
+        <Button onClick={() => setIsFormOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Compromisso
+        </Button>
       </div>
 
-      <div className="grid grid-cols-7 gap-4">
-        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-          <div key={day} className="text-center font-medium text-gray-600">
-            {day}
-          </div>
-        ))}
-        {/* Células do calendário aqui */}
-      </div>
-
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-4">Compromissos do Dia</h2>
-        <div className="space-y-4">
-          {/* Lista de compromissos aqui */}
-        </div>
-      </div>
+      {isFormOpen ? (
+        <EventForm
+          onSubmit={handleEventSubmit}
+          onCancel={() => setIsFormOpen(false)}
+          initialData={selectedEvent || undefined}
+        />
+      ) : (
+        <MonthView
+          currentDate={currentDate}
+          events={[]} // Pass your events here
+          onSelectDate={(date) => {
+            setCurrentDate(date);
+            setIsFormOpen(true);
+          }}
+          onEventClick={(event) => {
+            setSelectedEvent(event);
+            setIsFormOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }

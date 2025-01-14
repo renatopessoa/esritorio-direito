@@ -65,7 +65,7 @@ export function LoginForm() {
               type={showPassword ? 'text' : 'password'}
               id="password"
               className="input-dark w-full pr-10"
-              placeholder="••••••••"
+              placeholder=""
               {...register('password')}
             />
             <button

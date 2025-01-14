@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Upload, X, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 
 interface FileUploadProps {
@@ -10,28 +9,20 @@ interface FileUploadProps {
   maxSize?: number;
   accept?: string;
   label?: string;
+  helpText?: string;
 }
 
 export function FileUpload({
   onUpload,
   maxFiles = 5,
-  maxSize = 10 * 1024 * 1024, // 10MB
-  accept = '.pdf,.doc,.docx',
-  label = 'Documentos'
+  maxSize = 5 * 1024 * 1024, // 5MB default
+  accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png',
+  label = 'Upload de Arquivos',
+  helpText = 'Arraste arquivos ou clique para selecionar'
 }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
+  const [isUploading, setIsUploading] = useState(false);
 
   const validateFile = (file: File): string | null => {
     if (!accept.split(',').some(type => file.name.toLowerCase().endsWith(type))) {
@@ -43,19 +34,6 @@ export function FileUpload({
     return null;
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    handleFiles(droppedFiles);
-  }, [maxFiles]);
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      handleFiles(Array.from(e.target.files));
-    }
-  };
-
   const handleFiles = (newFiles: File[]) => {
     if (files.length + newFiles.length > maxFiles) {
       toast.error(`Máximo de ${maxFiles} arquivos permitidos`);
@@ -63,23 +41,35 @@ export function FileUpload({
     }
 
     const validFiles: File[] = [];
-    const invalidFiles: string[] = [];
+    const errors: string[] = [];
 
     newFiles.forEach(file => {
       const error = validateFile(file);
       if (error) {
-        invalidFiles.push(`${file.name}: ${error}`);
+        errors.push(`${file.name}: ${error}`);
       } else {
         validFiles.push(file);
       }
     });
 
-    if (invalidFiles.length > 0) {
-      invalidFiles.forEach(error => toast.error(error));
+    if (errors.length > 0) {
+      errors.forEach(error => toast.error(error));
     }
 
     if (validFiles.length > 0) {
       setFiles(prev => [...prev, ...validFiles]);
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFiles(Array.from(e.dataTransfer.files));
+  }, []);
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(Array.from(e.target.files));
     }
   };
 
@@ -90,15 +80,12 @@ export function FileUpload({
   const handleUpload = async () => {
     if (files.length === 0) return;
 
-    setUploading(true);
+    setIsUploading(true);
     try {
       await onUpload(files);
       setFiles([]);
-      toast.success('Documentos anexados com sucesso');
-    } catch (error) {
-      toast.error('Erro ao anexar documentos');
     } finally {
-      setUploading(false);
+      setIsUploading(false);
     }
   };
 
@@ -107,46 +94,54 @@ export function FileUpload({
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   };
 
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-300">
-        {label}
-      </label>
-      
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`
-          input-dark w-full min-h-[100px] flex flex-col items-center justify-center p-4
-          border-2 border-dashed rounded-lg transition-colors cursor-pointer
-          ${isDragging ? 'border-primary bg-primary/5' : 'border-white/10 hover:border-primary/50'}
-        `}
-      >
-        <input
-          type="file"
-          multiple
-          accept={accept}
-          onChange={handleFileInput}
-          className="hidden"
-          id="file-upload"
-        />
-        <label htmlFor="file-upload" className="cursor-pointer text-center">
-          <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-          <p className="text-sm text-gray-300">
-            Arraste arquivos ou clique para selecionar
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            Formatos aceitos: {accept} • Máximo {formatFileSize(maxSize)}
-          </p>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-300">
+          {label}
         </label>
+        
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+          }}
+          onDrop={handleDrop}
+          className={`
+            input-dark w-full min-h-[100px] flex flex-col items-center justify-center p-4
+            border-2 border-dashed rounded-lg transition-colors cursor-pointer
+            ${isDragging ? 'border-primary bg-primary/5' : 'border-white/10 hover:border-primary/50'}
+          `}
+        >
+          <input
+            type="file"
+            multiple
+            accept={accept}
+            onChange={handleFileInput}
+            className="hidden"
+            id="file-upload"
+          />
+          <label htmlFor="file-upload" className="cursor-pointer text-center">
+            <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm text-gray-300">
+              {helpText}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Formatos aceitos: {accept} • Máximo {formatFileSize(maxSize)}
+            </p>
+          </label>
+        </div>
       </div>
 
       {files.length > 0 && (
-        <div className="mt-4 space-y-2">
+        <div className="space-y-2">
           {files.map((file, index) => (
             <div
               key={index}
@@ -171,9 +166,9 @@ export function FileUpload({
           <div className="flex justify-end pt-2">
             <Button
               onClick={handleUpload}
-              disabled={uploading}
+              disabled={isUploading}
             >
-              {uploading ? 'Anexando...' : 'Anexar Documentos'}
+              {isUploading ? 'Enviando...' : 'Enviar Documentos'}
             </Button>
           </div>
         </div>

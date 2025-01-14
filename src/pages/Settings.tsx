@@ -2,6 +2,7 @@ import React from 'react';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { ThemeToggle } from '../components/theme/ThemeToggle';
 import { useAuthStore } from '../stores/useAuthStore';
 
 export default function Settings() {
@@ -25,6 +26,12 @@ export default function Settings() {
             />
             <Button>Salvar Alterações</Button>
           </form>
+        </Card>
+
+        <Card title="Aparência">
+          <div className="space-y-4">
+            <ThemeToggle />
+          </div>
         </Card>
 
         <Card title="Segurança">
@@ -66,17 +73,6 @@ export default function Settings() {
               </div>
               <input type="checkbox" className="toggle" defaultChecked />
             </div>
-          </div>
-        </Card>
-
-        <Card title="Backup">
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Faça backup dos seus dados regularmente para garantir a segurança das informações
-            </p>
-            <Button variant="outline" className="w-full">
-              Fazer Backup Agora
-            </Button>
           </div>
         </Card>
       </div>

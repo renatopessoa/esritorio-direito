@@ -1,9 +1,21 @@
 import { z } from 'zod';
 
+export const clientDocumentSchema = z.object({
+  id: z.string().uuid(),
+  client_id: z.string().uuid(),
+  name: z.string(),
+  url: z.string().url(),
+  size: z.number(),
+  type: z.string(),
+  created_at: z.string().datetime(),
+});
+
+export type ClientDocument = z.infer<typeof clientDocumentSchema>;
+
 export const clientSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.string().uuid(),
   name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
-  documentId: z.string().min(11, 'CPF/CNPJ inválido'),
+  document_id: z.string().min(11, 'CPF/CNPJ inválido'),
   email: z.string().email('Email inválido'),
   phone: z.string().min(10, 'Telefone inválido'),
   address: z.object({
@@ -12,27 +24,12 @@ export const clientSchema = z.object({
     complement: z.string().optional(),
     neighborhood: z.string().min(2, 'Bairro é obrigatório'),
     city: z.string().min(2, 'Cidade é obrigatória'),
-    state: z.string().length(2, 'Estado inválido'),
+    state: z.string().length(2, 'Estado deve ter 2 letras'),
     zipCode: z.string().length(8, 'CEP inválido'),
   }),
   notes: z.string().optional(),
-  documents: z.array(z.object({
-    id: z.string().uuid(),
-    name: z.string(),
-    url: z.string().url(),
-    type: z.string(),
-    size: z.number(),
-    uploadedAt: z.date(),
-  })).optional(),
-  history: z.array(z.object({
-    id: z.string().uuid(),
-    type: z.enum(['CONTACT', 'MEETING', 'DOCUMENT', 'OTHER']),
-    description: z.string(),
-    date: z.date(),
-    createdBy: z.string().uuid(),
-  })).optional(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
 });
 
 export type Client = z.infer<typeof clientSchema>;

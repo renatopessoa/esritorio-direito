@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { useThemeStore } from './stores/useThemeStore';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -11,9 +12,16 @@ import Documents from './pages/Documents';
 import Calendar from './pages/Calendar';
 import Financial from './pages/Financial';
 import Settings from './pages/Settings';
+import UserRegistration from './pages/UserRegistration';
 import { AuthGuard } from './components/auth/AuthGuard';
 
 function App() {
+  const theme = useThemeStore((state) => state.theme);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
+
   return (
     <BrowserRouter>
       <Toaster richColors position="top-right" />
@@ -38,6 +46,7 @@ function App() {
           <Route path="documents" element={<Documents />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="financial" element={<Financial />} />
+          <Route path="user-registration" element={<UserRegistration />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 

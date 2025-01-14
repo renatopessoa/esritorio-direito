@@ -1,18 +1,17 @@
 import React from 'react';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { Eye, Edit, Trash2 } from 'lucide-react';
 import type { Client } from '../../types/client';
 import { formatDate } from '../../utils/date';
 
 interface ClientListProps {
   clients: Client[];
-  onView?: (client: Client) => void;
-  onEdit?: (client: Client) => void;
-  onDelete?: (client: Client) => void;
+  onEdit: (client: Client) => void;
+  onDelete: (client: Client) => void;
 }
 
-export function ClientList({ clients, onView, onEdit, onDelete }: ClientListProps) {
+export function ClientList({ clients, onEdit, onDelete }: ClientListProps) {
   return (
     <Card>
       <div className="overflow-x-auto">
@@ -31,27 +30,28 @@ export function ClientList({ clients, onView, onEdit, onDelete }: ClientListProp
             {clients.map((client) => (
               <tr key={client.id}>
                 <td className="py-3 px-4">{client.name}</td>
-                <td className="py-3 px-4">{client.documentId}</td>
+                <td className="py-3 px-4">{client.document_id}</td>
                 <td className="py-3 px-4">{client.email}</td>
                 <td className="py-3 px-4">{client.phone}</td>
-                <td className="py-3 px-4">{formatDate(client.createdAt!)}</td>
+                <td className="py-3 px-4">{formatDate(client.created_at)}</td>
                 <td className="py-3 px-4">
                   <div className="flex gap-2">
-                    {onView && (
-                      <Button variant="ghost" size="sm" onClick={() => onView(client)}>
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    )}
-                    {onEdit && (
-                      <Button variant="ghost" size="sm" onClick={() => onEdit(client)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                    )}
-                    {onDelete && (
-                      <Button variant="ghost" size="sm" onClick={() => onDelete(client)}>
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                      </Button>
-                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => onEdit(client)}
+                      className="hover:text-blue-400"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => onDelete(client)}
+                      className="hover:text-red-400"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </td>
               </tr>

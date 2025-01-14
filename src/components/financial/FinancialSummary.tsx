@@ -65,7 +65,7 @@ export function FinancialSummary() {
             <AlertCircle className="w-10 h-10 text-yellow-400" />
             <div>
               <h4 className="font-medium text-white">Honorários Pendentes</h4>
-              <p className="text-gray-400">3 pagamentos atrasados totalizando R$ 12.500,00</p>
+              <p className="text-gray-400">3 pagamentos atrasados totalizando R$</p>
             </div>
           </div>
 
@@ -92,7 +92,7 @@ export function FinancialSummary() {
                 <p className="text-sm text-gray-400">Recebido em 15/03/2024</p>
               </div>
             </div>
-            <p className="text-lg font-medium text-green-400">+ R$ 5.000,00</p>
+            <p className="text-lg font-medium text-green-400">+ R$</p>
           </div>
 
           <div className="flex items-center justify-between p-4 glass-card rounded-lg">
@@ -105,7 +105,7 @@ export function FinancialSummary() {
                 <p className="text-sm text-gray-400">Pago em 14/03/2024</p>
               </div>
             </div>
-            <p className="text-lg font-medium text-red-400">- R$ 1.200,00</p>
+            <p className="text-lg font-medium text-red-400">- </p>
           </div>
         </div>
       </Card>

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { User } from '../types/user';
+import { userRoles } from '../types/user';
 
 interface UserStore {
   users: User[];
@@ -10,21 +11,21 @@ interface UserStore {
 export const useUserStore = create<UserStore>((set, get) => ({
   users: [
     {
-      id: '1',
-      name: 'Dra. Wivinay Melo',
+      id: '',
+      name: '',
       email: '',
-      role: 'lawyer',
+      role: '',
       active: true,
-      registration: 'OAB/PE 51277',
+      registration: '',
       position: ''
     },
     {
       id: '2',
-      name: 'Dra. Emilia Florentino',
+      name: '',
       email: '',
-      role: 'lawyer',
+      role: '',
       active: true,
-      registration: 'OAB/PE 41075',
+      registration: '',
       position: ''
     }
   ],

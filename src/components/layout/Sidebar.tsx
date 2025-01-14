@@ -1,15 +1,16 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Scale, Users, Briefcase, Calendar, Settings, BarChart, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Calendar, Settings, BarChart, LogOut, UserPlus } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthStore } from '../../stores/useAuthStore';
 
 const menuItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
   { icon: Users, label: 'Clientes', path: '/app/clients' },
   { icon: Briefcase, label: 'Processos', path: '/app/processes' },
-  { icon: Scale, label: 'Documentos', path: '/app/documents' },
   { icon: Calendar, label: 'Agenda', path: '/app/calendar' },
   { icon: BarChart, label: 'Financeiro', path: '/app/financial' },
+  { icon: UserPlus, label: 'Cadastro de Usuário', path: '/app/user-registration' },
   { icon: Settings, label: 'Configurações', path: '/app/settings' },
 ] as const;
 
