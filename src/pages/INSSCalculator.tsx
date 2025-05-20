@@ -163,11 +163,11 @@ export default function INSSCalculator() {
                                                 type="text"
                                                 value={formattedSalary}
                                                 onChange={handleSalaryChange}
-                                                className="border  rounded-lg px-4 py-3 w-full text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                className="border rounded-lg px-4 py-3 w-full text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                                                 placeholder="R$ 0,00"
                                             />
                                         </div>
-                                        <div className="text-sm text-gray-500 mt-1 flex items-center">
+                                        <div className="text-sm text-gray-700 mt-1 flex items-center">
                                             <Info className="w-4 h-4 mr-1" />
                                             Informe apenas números, a formatação é automática
                                         </div>
@@ -204,14 +204,14 @@ export default function INSSCalculator() {
 
                                 {showTable && (
                                     <div className="mt-6 bg-white p-5 rounded-lg border border-gray-200">
-                                        <h2 className="text-xl font-semibold mb-3">Tabela INSS 2025</h2>
+                                        <h2 className="text-xl font-semibold mb-3 text-black">Tabela INSS 2025</h2>
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full border-collapse">
                                                 <thead>
                                                     <tr className="bg-gray-100">
-                                                        <th className="border border-gray-200 px-4 py-2 text-left">Faixa Salarial</th>
-                                                        <th className="border border-gray-200 px-4 py-2 text-left">Alíquota</th>
-                                                        <th className="border border-gray-200 px-4 py-2 text-left">Dedução</th>
+                                                        <th className="border border-gray-200 px-4 py-2 text-left text-black font-bold">Faixa Salarial</th>
+                                                        <th className="border border-gray-200 px-4 py-2 text-left text-black font-bold">Alíquota</th>
+                                                        <th className="border border-gray-200 px-4 py-2 text-left text-black font-bold">Dedução</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -333,8 +333,8 @@ export default function INSSCalculator() {
                 </div>
 
                 <div className="mt-6 bg-white rounded-lg p-5 shadow">
-                    <h2 className="text-xl font-bold mb-3">Como funciona o cálculo do INSS?</h2>
-                    <p className="mb-3">
+                    <h2 className="text-xl text-black font-bold mb-3">Como funciona o cálculo do INSS?</h2>
+                    <p className="mb-3 text-black">
                         O cálculo do INSS segue o modelo de alíquotas progressivas, onde cada faixa salarial tem uma alíquota específica.
                         O valor final é calculado aplicando-se a alíquota correspondente ao seu salário e subtraindo a parcela a deduzir.
                     </p>
