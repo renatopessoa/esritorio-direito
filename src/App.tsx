@@ -14,6 +14,7 @@ import Financial from './pages/Financial';
 import Settings from './pages/Settings';
 import UserRegistration from './pages/UserRegistration';
 import { AuthGuard } from './components/auth/AuthGuard';
+import INSSCalculator from './pages/INSSCalculator';
 
 function App() {
   const theme = useThemeStore((state) => state.theme);
@@ -41,6 +42,7 @@ function App() {
         >
           <Route index element={<Navigate to="/app/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="INSSCalculator" element={<INSSCalculator />} />
           <Route path="clients" element={<Clients />} />
           <Route path="processes" element={<Processes />} />
           <Route path="documents" element={<Documents />} />

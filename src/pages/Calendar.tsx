@@ -73,6 +73,8 @@ export default function Calendar() {
           }}
         />
       )}
+
+      {/* Para acessar a tela de cálculo do INSS, crie um link para /pages/INSSCalculator.tsx no seu menu de navegação. */}
     </div>
   );
 }
