@@ -66,30 +66,37 @@ export default function INSSCalculator() {
     const handleSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
 
-        // Remove todos os caracteres não numéricos, exceto vírgula e ponto
-        let numericValue = value.replace(/[^\d,.]/g, '');
-
-        // Converte para um número para formatação
-        const numberValue = parseFloat(numericValue.replace(',', '.')) || 0;
-
-        // Atualiza o estado do salário (versão sem formatação para cálculos)
-        setSalary(numberValue.toString());
-
-        // Atualiza a versão formatada para exibição
-        if (numericValue) {
-            setFormattedSalary(formatCurrency(numberValue));
-        } else {
+        // Permite digitar o valor completo antes de formatar
+        if (value === '') {
+            setSalary('');
             setFormattedSalary('');
+            return;
         }
+
+        // Mantém apenas números, vírgulas e pontos
+        const cleaned = value.replace(/[^\d,.]/g, '');
+
+        // Não formata enquanto o usuário está digitando
+        setSalary(cleaned);
+
+        // Não mostra a formatação no campo enquanto o usuário digita
+        setFormattedSalary(cleaned);
     };
 
     const handleCalculate = (e: React.FormEvent) => {
         e.preventDefault();
-        const value = parseFloat(salary.replace(',', '.'));
+
+        // Remove os símbolos não numéricos, preservando apenas um separador decimal
+        const normalizedValue = salary.replace(/[^\d]/g, '');
+        const value = parseFloat(normalizedValue) / 100; // Considera os dois últimos dígitos como centavos
+
         if (isNaN(value) || value <= 0) {
             setResult(null);
             return;
         }
+
+        // Formata o valor apenas após o cálculo
+        setFormattedSalary(formatCurrency(value));
 
         const calculationResult = calculateINSS(value);
         setResult(calculationResult);
@@ -101,7 +108,7 @@ export default function INSSCalculator() {
                 date: new Date()
             };
 
-            const updatedHistory = [newResult, ...history.slice(0, 9)]; // Mantém apenas os 10 últimos cálculos
+            const updatedHistory = [newResult, ...history.slice(0, 9)];
             setHistory(updatedHistory);
             localStorage.setItem('inssCalculationHistory', JSON.stringify(updatedHistory));
         }
@@ -164,12 +171,13 @@ export default function INSSCalculator() {
                                                 value={formattedSalary}
                                                 onChange={handleSalaryChange}
                                                 className="border rounded-lg px-4 py-3 w-full text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                                placeholder="R$ 0,00"
+                                                placeholder="Digite o valor sem R$ (ex: 3000,00)"
+                                                inputMode="decimal"
                                             />
                                         </div>
                                         <div className="text-sm text-gray-700 mt-1 flex items-center">
                                             <Info className="w-4 h-4 mr-1" />
-                                            Informe apenas números, a formatação é automática
+                                            Digite o valor completo, como 3000 ou 3000,00
                                         </div>
                                     </div>
 
@@ -217,11 +225,15 @@ export default function INSSCalculator() {
                                                 <tbody>
                                                     {INSS_TABLE_2025.map((faixa, index) => (
                                                         <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                                            <td className="border border-gray-200 px-4 py-2">
+                                                            <td className="border border-gray-200 px-4 py-2 text-black">
                                                                 {formatCurrency(faixa.min)} até {formatCurrency(faixa.max)}
                                                             </td>
-                                                            <td className="border border-gray-200 px-4 py-2">{faixa.aliquot * 100}%</td>
-                                                            <td className="border border-gray-200 px-4 py-2">{formatCurrency(faixa.deduction)}</td>
+                                                            <td className="border border-gray-200 px-4 py-2 text-black font-medium">
+                                                                {faixa.aliquot * 100}%
+                                                            </td>
+                                                            <td className="border border-gray-200 px-4 py-2 text-black">
+                                                                {formatCurrency(faixa.deduction)}
+                                                            </td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
@@ -288,32 +300,32 @@ export default function INSSCalculator() {
 
                                         <div className="space-y-3">
                                             <div className="bg-white p-3 rounded border border-gray-200">
-                                                <div className="text-sm text-gray-500">Salário bruto</div>
-                                                <div className="text-lg font-semibold">{formatCurrency(parseFloat(salary))}</div>
+                                                <div className="text-sm text-gray-700 font-medium">Salário bruto</div>
+                                                <div className="text-lg font-semibold text-black">{formatCurrency(parseFloat(salary))}</div>
                                             </div>
 
                                             <div className="bg-white p-3 rounded border border-gray-200">
-                                                <div className="text-sm text-gray-500">Faixa salarial</div>
-                                                <div className="text-md">{result.faixa}</div>
+                                                <div className="text-sm text-gray-700 font-medium">Faixa salarial</div>
+                                                <div className="text-md text-black">{result.faixa}</div>
                                             </div>
 
                                             <div className="bg-white p-3 rounded border border-gray-200">
-                                                <div className="text-sm text-gray-500">Alíquota aplicada</div>
-                                                <div className="text-md font-medium">{result.aliquot}%</div>
+                                                <div className="text-sm text-gray-700 font-medium">Alíquota aplicada</div>
+                                                <div className="text-md font-medium text-black">{result.aliquot}%</div>
                                             </div>
 
                                             <div className="bg-white p-3 rounded border border-gray-200">
-                                                <div className="text-sm text-gray-500">Parcela a deduzir</div>
-                                                <div className="text-md">{formatCurrency(result.deduction)}</div>
+                                                <div className="text-sm text-gray-700 font-medium">Parcela a deduzir</div>
+                                                <div className="text-md text-black">{formatCurrency(result.deduction)}</div>
                                             </div>
 
                                             <div className="bg-blue-100 p-4 rounded border border-blue-200">
-                                                <div className="text-sm text-blue-700">Contribuição INSS</div>
-                                                <div className="text-2xl font-bold text-blue-700">{formatCurrency(result.inss)}</div>
+                                                <div className="text-sm text-blue-800 font-medium">Contribuição INSS</div>
+                                                <div className="text-2xl font-bold text-blue-800">{formatCurrency(result.inss)}</div>
                                             </div>
                                         </div>
 
-                                        <div className="mt-4 text-sm text-gray-600 bg-white p-3 rounded">
+                                        <div className="mt-4 text-sm text-black bg-white p-3 rounded">
                                             <p className="flex items-start">
                                                 <Info className="w-4 h-4 mr-1 mt-0.5 text-blue-500" />
                                                 Cálculo: {formatCurrency(parseFloat(salary))} × {result.aliquot}% - {formatCurrency(result.deduction)} = {formatCurrency(result.inss)}
