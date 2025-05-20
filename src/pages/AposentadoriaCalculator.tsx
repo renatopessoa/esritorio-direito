@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/Button';
-import { Info, Calculator, Calendar, User } from 'lucide-react';
+import { Info, Calculator, Calendar, User, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom'; // Importação do componente Link para navegação
 
 interface AposentadoriaResult {
     idadeMinima: number;
@@ -71,6 +72,13 @@ export default function AposentadoriaCalculator() {
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
+                <div className="flex items-center mb-4">
+                    <Link to="/inss" className="text-green-600 hover:text-green-800 flex items-center">
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Voltar para calculadora do INSS
+                    </Link>
+                </div>
+
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                     <div className="bg-green-600 text-white p-6">
                         <h1 className="text-3xl font-bold flex items-center">

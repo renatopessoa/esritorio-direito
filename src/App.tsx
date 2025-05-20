@@ -15,6 +15,7 @@ import Settings from './pages/Settings';
 import UserRegistration from './pages/UserRegistration';
 import { AuthGuard } from './components/auth/AuthGuard';
 import INSSCalculator from './pages/INSSCalculator';
+import AposentadoriaCalculator from './pages/AposentadoriaCalculator';
 
 function App() {
   const theme = useThemeStore((state) => state.theme);
@@ -51,6 +52,10 @@ function App() {
           <Route path="user-registration" element={<UserRegistration />} />
           <Route path="settings" element={<Settings />} />
         </Route>
+
+        {/* Novas rotas adicionadas */}
+        <Route path="/inss" element={<INSSCalculator />} />
+        <Route path="/aposentadoria" element={<AposentadoriaCalculator />} />
 
         {/* Rota para páginas não encontradas */}
         <Route path="*" element={<Navigate to="/app/dashboard" replace />} />

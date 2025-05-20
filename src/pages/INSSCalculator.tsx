@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { Info, Calculator, ArrowLeft, History, Download } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const INSS_TABLE_2025 = [
     { min: 0, max: 1518.00, aliquot: 0.075, deduction: 0 },
@@ -357,9 +358,9 @@ export default function INSSCalculator() {
                         <p className="text-black flex items-center">
                             <Calculator className="w-5 h-5 mr-2 text-green-600" />
                             <span>Quer calcular sua aposentadoria por idade? </span>
-                            <a href="/aposentadoria" className="ml-2 text-green-600 hover:text-green-800 font-medium">
+                            <Link to="/aposentadoria" className="ml-2 text-green-600 hover:text-green-800 font-medium">
                                 Acesse nosso simulador de aposentadoria →
-                            </a>
+                            </Link>
                         </p>
                     </div>
                 </div>
