@@ -353,6 +353,15 @@ export default function INSSCalculator() {
                     <p className="text-gray-600">
                         Exemplo: Para um salário de R$ 3.000,00, aplica-se a alíquota de 12% e subtrai-se a dedução de R$ 106,59, resultando em uma contribuição de R$ 253,41.
                     </p>
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-black flex items-center">
+                            <Calculator className="w-5 h-5 mr-2 text-green-600" />
+                            <span>Quer calcular sua aposentadoria por idade? </span>
+                            <a href="/aposentadoria" className="ml-2 text-green-600 hover:text-green-800 font-medium">
+                                Acesse nosso simulador de aposentadoria →
+                            </a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
