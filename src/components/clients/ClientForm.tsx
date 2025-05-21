@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -12,10 +12,18 @@ import { searchAddressByCep } from '../../services/viaCep';
 export interface ClientFormProps {
   onSubmit: (data: any) => Promise<any>;
   isLoading?: boolean;
-  initialData?: Partial<ClientFormData>; // Se existir
+  initialData?: Partial<ClientFormData>;
   onCancel?: () => void;
+  onDocumentsChange?: (files: File[]) => void;
 }
-export function ClientForm({ onSubmit, isLoading = false, initialData = {}, onCancel }: ClientFormProps) {
+
+export function ClientForm({
+  onSubmit,
+  isLoading = false,
+  initialData = {},
+  onCancel,
+  onDocumentsChange
+}: ClientFormProps) {
   const {
     register,
     handleSubmit,
@@ -38,6 +46,8 @@ export function ClientForm({ onSubmit, isLoading = false, initialData = {}, onCa
     },
   });
 
+  const [files, setFiles] = useState<File[]>([]);
+
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
     if (cep.length === 8) {
@@ -58,6 +68,18 @@ export function ClientForm({ onSubmit, isLoading = false, initialData = {}, onCa
       await onSubmit(data);
     } catch (error: any) {
       toast.error(error.message || 'Erro ao salvar cliente');
+    }
+  };
+
+  // Atualiza os arquivos e notifica o componente pai
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const fileList = Array.from(event.target.files);
+      setFiles(fileList);
+
+      if (onDocumentsChange) {
+        onDocumentsChange(fileList);
+      }
     }
   };
 
@@ -158,6 +180,52 @@ export function ClientForm({ onSubmit, isLoading = false, initialData = {}, onCa
           className="input-dark w-full h-32 resize-none"
           placeholder="Observações adicionais sobre o cliente..."
           {...register('notes')} />
+      </Card>
+
+      <Card title="Documentos">
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <input
+              type="file"
+              id="documents"
+              multiple
+              onChange={handleFileChange}
+              className="hidden"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            />
+            <label
+              htmlFor="documents"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700"
+            >
+              <span className="mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </span>
+              Selecionar Documentos
+            </label>
+          </div>
+
+          {files.length > 0 && (
+            <div className="mt-3">
+              <p className="text-sm font-medium mb-2">Documentos selecionados:</p>
+              <ul className="space-y-1">
+                {files.map((file, index) => (
+                  <li key={index} className="text-sm flex items-center">
+                    <span className="mr-2">📄</span>
+                    {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <p className="text-xs text-gray-500">
+            Formatos aceitos: PDF, DOC, DOCX, JPG, JPEG, PNG. Máximo 10MB por arquivo.
+          </p>
+        </div>
       </Card>
 
       <div className="flex justify-end gap-3">

@@ -5,13 +5,14 @@ import { Button } from '../ui/Button';
 import type { Client } from '../../types/client';
 import { formatDate } from '../../utils/date';
 
-interface ClientListProps {
+export interface ClientListProps {
   clients: Client[];
   onEdit: (client: Client) => void;
   onDelete: (client: Client) => void;
+  isDeleting?: boolean; // Adicionando a propriedade isDeleting como opcional
 }
 
-export function ClientList({ clients, onEdit, onDelete }: ClientListProps) {
+export function ClientList({ clients, onEdit, onDelete, isDeleting = false }: ClientListProps) {
   return (
     <Card>
       <div className="overflow-x-auto">
@@ -36,19 +37,20 @@ export function ClientList({ clients, onEdit, onDelete }: ClientListProps) {
                 <td className="py-3 px-4">{formatDate(client.created_at)}</td>
                 <td className="py-3 px-4">
                   <div className="flex gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => onEdit(client)}
                       className="hover:text-blue-400"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => onDelete(client)}
                       className="hover:text-red-400"
+                      disabled={isDeleting} // Desabilita o botão se isDeleting for verdadeiro
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

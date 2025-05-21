@@ -82,8 +82,30 @@ const clients = {
   },
 };
 
+const documents = {
+  uploadClientDocuments: async (clientId: number, formData: FormData) => {
+    const response = await axiosInstance.post(`/clients/${clientId}/documents`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  getClientDocuments: async (clientId: number) => {
+    const response = await axiosInstance.get(`/clients/${clientId}/documents`);
+    return response.data;
+  },
+
+  deleteDocument: async (documentId: number) => {
+    const response = await axiosInstance.delete(`/documents/${documentId}`);
+    return response.data;
+  }
+};
+
 // API exportada com todos os serviços
 export const api = {
   clients,
+  documents,
   // Outros serviços podem ser adicionados aqui
 };

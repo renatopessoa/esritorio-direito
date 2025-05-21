@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, Grid, Chip } from '@mui/material';
+import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { User, Case } from '../../types';
 import { Phone, Mail, MapPin } from 'lucide-react';
 
