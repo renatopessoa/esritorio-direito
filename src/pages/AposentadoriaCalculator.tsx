@@ -44,7 +44,9 @@ export default function AposentadoriaCalculator() {
     const [idade, setIdade] = useState('');
     const [tempoContribuicaoAnos, setTempoContribuicaoAnos] = useState('');
     const [tempoContribuicaoMeses, setTempoContribuicaoMeses] = useState(''); // Para pedágio
-    const [mediaSalarial, setMediaSalarial] = useState('');
+    // const [mediaSalarial, setMediaSalarial] = useState(''); // Substituído
+    const [salarioBrutoOuMedia, setSalarioBrutoOuMedia] = useState(''); // valor numérico em string
+    const [formattedSalarioBrutoOuMedia, setFormattedSalarioBrutoOuMedia] = useState(''); // valor formatado
     const [tempoFaltantePedagioAnos, setTempoFaltantePedagioAnos] = useState('');
     const [tempoFaltantePedagioMeses, setTempoFaltantePedagioMeses] = useState('');
 
@@ -65,11 +67,12 @@ export default function AposentadoriaCalculator() {
 
     const handleCalculate = (e: React.FormEvent) => {
         e.preventDefault();
-        setResult(null); // Limpa resultado anterior
+        setResult(null);
 
         const idadeNum = parseInt(idade, 10);
         const tempoContTotalAnos = parseTempoContribuicaoTotalAnos();
-        const mediaSalarialNum = parseFloat(mediaSalarial.replace(/[^\d,]/g, '').replace(',', '.'));
+        // Corrige: pega o valor numérico corretamente
+        const salarioBrutoOuMediaNum = Number(salarioBrutoOuMedia);
         const tempoFaltantePedagioTotalAnos = parseTempoFaltantePedagioTotalAnos();
 
         let calculatedResult: AposentadoriaResult = {
@@ -90,7 +93,7 @@ export default function AposentadoriaCalculator() {
 
         switch (tipoCalculo) {
             case 'idadeUrbana':
-                if (isNaN(mediaSalarialNum) || mediaSalarialNum <= 0) {
+                if (isNaN(salarioBrutoOuMediaNum) || salarioBrutoOuMediaNum <= 0) {
                     setResult({ ...calculatedResult, mensagemPrincipal: "Média salarial inválida." });
                     return;
                 }
@@ -105,7 +108,7 @@ export default function AposentadoriaCalculator() {
                     const anosExcedentes = Math.max(0, tempoContTotalAnos - (genero === 'feminino' ? 15 : 20));
                     const percentualAdicional = Math.min(anosExcedentes * 2, 40);
                     const percentualTotal = percentualBase + percentualAdicional;
-                    calculatedResult.valorEstimado = (mediaSalarialNum * percentualTotal) / 100;
+                    calculatedResult.valorEstimado = (salarioBrutoOuMediaNum * percentualTotal) / 100;
                     calculatedResult.percentualTotal = percentualTotal;
                     calculatedResult.mensagemPrincipal = "Você é elegível para Aposentadoria por Idade!";
                 } else {
@@ -114,7 +117,7 @@ export default function AposentadoriaCalculator() {
                 calculatedResult.detalhes = {
                     idadeAtual: idadeNum, idadeMinimaExigida: idadeMinimaIdade, atendeIdade,
                     tempoContribuicaoAtual: tempoContTotalAnos.toFixed(2), tempoContribuicaoMinimoExigido: tempoContMinimoIdade, atendeContribuicao: atendeContribuicaoIdade,
-                    mediaSalarial: formatCurrency(mediaSalarialNum),
+                    mediaSalarial: formatCurrency(salarioBrutoOuMediaNum),
                 };
                 break;
 
@@ -235,6 +238,36 @@ export default function AposentadoriaCalculator() {
         return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     };
 
+    // Formatação automática do salário bruto/média salarial
+    const handleSalarioBrutoOuMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+
+        // Remove tudo exceto dígitos
+        const numericValue = value.replace(/[^\d]/g, '');
+
+        if (!numericValue) {
+            setSalarioBrutoOuMedia('');
+            setFormattedSalarioBrutoOuMedia('');
+            return;
+        }
+
+        // Converte para número - consideramos o valor como reais inteiros, não como centavos
+        const numericAmount = parseInt(numericValue, 10);
+
+        // Atualiza o estado com o valor numérico para cálculos
+        setSalarioBrutoOuMedia(numericAmount.toString());
+
+        // Formata o valor para exibição como moeda brasileira
+        setFormattedSalarioBrutoOuMedia(
+            numericAmount.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })
+        );
+    };
+
     const renderDetalhesResultado = (detalhes: ResultadoDetalhes | undefined) => {
         if (!detalhes) return null;
         return (
@@ -341,88 +374,94 @@ export default function AposentadoriaCalculator() {
                                         </div>
                                     </div>
 
-                {tipoCalculo === 'idadeUrbana' && (
-                    <div>
-                        <label className="block mb-2 font-medium text-lg text-black">Média salarial (R$):</label>
-                        <input type="text" value={mediaSalarial} onChange={(e) => setMediaSalarial(e.target.value)} className="border rounded-lg px-4 py-3 w-full text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black" placeholder="Ex: 3500,00"/>
-                        <div className="text-sm text-gray-700 mt-1 flex items-center"><Info className="w-4 h-4 mr-1" />Média de todos os salários a partir de julho de 1994</div>
-                    </div>
-                )}
+                                    {tipoCalculo === 'idadeUrbana' && (
+                                        <div>
+                                            <label className="block mb-2 font-medium text-lg text-black">Informe sua média salarial (R$):</label>
+                                            <input
+                                                type="text"
+                                                value={formattedSalarioBrutoOuMedia}
+                                                onChange={handleSalarioBrutoOuMediaChange}
+                                                className="border rounded-lg px-4 py-3 w-full text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black"
+                                                placeholder="R$ 0,00"
+                                            />
+                                            <div className="text-sm text-gray-700 mt-1 flex items-center"><Info className="w-4 h-4 mr-1" />Média de todos os salários a partir de julho de 1994. Digite apenas números.</div>
+                                        </div>
+                                    )}
 
-                            {(tipoCalculo === 'pedagio50' || tipoCalculo === 'pedagio100') && (
-                                <div>
-                                    <label className="block mb-2 font-medium text-lg text-black">Tempo que faltava para {genero === 'feminino' ? '30 anos (mulher)' : '35 anos (homem)'} de contribuição em 13/11/2019:</label>
-                                    <div className="flex space-x-2">
-                                        <input type="number" value={tempoFaltantePedagioAnos} onChange={(e) => setTempoFaltantePedagioAnos(e.target.value)} className="border rounded-lg px-4 py-3 w-1/2 text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black" placeholder="Anos" min="0" max="50" />
-                                        <input type="number" value={tempoFaltantePedagioMeses} onChange={(e) => setTempoFaltantePedagioMeses(e.target.value)} className="border rounded-lg px-4 py-3 w-1/2 text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black" placeholder="Meses" min="0" max="11" />
+                                    {(tipoCalculo === 'pedagio50' || tipoCalculo === 'pedagio100') && (
+                                        <div>
+                                            <label className="block mb-2 font-medium text-lg text-black">Tempo que faltava para {genero === 'feminino' ? '30 anos (mulher)' : '35 anos (homem)'} de contribuição em 13/11/2019:</label>
+                                            <div className="flex space-x-2">
+                                                <input type="number" value={tempoFaltantePedagioAnos} onChange={(e) => setTempoFaltantePedagioAnos(e.target.value)} className="border rounded-lg px-4 py-3 w-1/2 text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black" placeholder="Anos" min="0" max="50" />
+                                                <input type="number" value={tempoFaltantePedagioMeses} onChange={(e) => setTempoFaltantePedagioMeses(e.target.value)} className="border rounded-lg px-4 py-3 w-1/2 text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black" placeholder="Meses" min="0" max="11" />
+                                            </div>
+                                            <div className="text-sm text-gray-700 mt-1 flex items-center"><Info className="w-4 h-4 mr-1" />Informe o tempo que faltava para completar o mínimo de contribuição na data da reforma.</div>
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <Button type="submit" className="bg-green-600 hover:bg-green-700 px-6 py-3 text-white font-medium rounded-lg flex items-center">
+                                            <Calculator className="w-5 h-5 mr-2" />
+                                            Simular Aposentadoria
+                                        </Button>
                                     </div>
-                                    <div className="text-sm text-gray-700 mt-1 flex items-center"><Info className="w-4 h-4 mr-1" />Informe o tempo que faltava para completar o mínimo de contribuição na data da reforma.</div>
-                                </div>
-                            )}
-
-                            <div>
-                                <Button type="submit" className="bg-green-600 hover:bg-green-700 px-6 py-3 text-white font-medium rounded-lg flex items-center">
-                                    <Calculator className="w-5 h-5 mr-2" />
-                                    Simular Aposentadoria
-                                </Button>
+                                </form>
                             </div>
-                        </form>
-                    </div>
 
-                    <div className="md:col-span-1">
-                {result ? (
-                  <div className={`p-5 rounded-lg shadow border-l-4 ${result.elegivel ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
-                    <h2 className={`text-xl font-bold mb-2 ${result.elegivel ? 'text-green-800' : 'text-red-800'}`}>
-                      Resultado da Simulação
-                    </h2>
-                    <p className={`font-semibold mb-1 ${result.elegivel ? 'text-green-700' : 'text-red-700'}`}>
-                      Regra: {result.tipoRegra}
-                    </p>
-                    <p className={`text-lg mb-3 ${result.elegivel ? 'text-green-700' : 'text-red-700'}`}>
-                      {result.mensagemPrincipal}
-                    </p>
-                    
-                    {renderDetalhesResultado(result.detalhes)}
+                            <div className="md:col-span-1">
+                                {result ? (
+                                    <div className={`p-5 rounded-lg shadow border-l-4 ${result.elegivel ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
+                                        <h2 className={`text-xl font-bold mb-2 ${result.elegivel ? 'text-green-800' : 'text-red-800'}`}>
+                                            Resultado da Simulação
+                                        </h2>
+                                        <p className={`font-semibold mb-1 ${result.elegivel ? 'text-green-700' : 'text-red-700'}`}>
+                                            Regra: {result.tipoRegra}
+                                        </p>
+                                        <p className={`text-lg mb-3 ${result.elegivel ? 'text-green-700' : 'text-red-700'}`}>
+                                            {result.mensagemPrincipal}
+                                        </p>
 
-                    {result.valorEstimado !== undefined && result.elegivel && (
-                            <div className="mt-4 bg-green-100 p-3 rounded border border-green-200">
-                                <div className="text-sm text-green-800 font-medium">Valor estimado da aposentadoria</div>
-                                <div className="text-2xl font-bold text-green-800">
-                                    {formatCurrency(result.valorEstimado)}
-                                </div>
-                                {result.percentualTotal !== undefined && (
-                                    <div className="text-xs text-green-700 mt-1">
-                                        ({result.percentualTotal}% da média salarial)
+                                        {renderDetalhesResultado(result.detalhes)}
+
+                                        {result.valorEstimado !== undefined && result.elegivel && (
+                                            <div className="mt-4 bg-green-100 p-3 rounded border border-green-200">
+                                                <div className="text-sm text-green-800 font-medium">Valor estimado da aposentadoria</div>
+                                                <div className="text-2xl font-bold text-green-800">
+                                                    {formatCurrency(result.valorEstimado)}
+                                                </div>
+                                                {result.percentualTotal !== undefined && (
+                                                    <div className="text-xs text-green-700 mt-1">
+                                                        ({result.percentualTotal}% da média salarial)
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 h-full flex flex-col justify-center items-center text-center">
+                                        <BookUser className="w-12 h-12 text-gray-400 mb-3" />
+                                        <h3 className="text-lg font-medium text-gray-700">Simulação de Aposentadoria</h3>
+                                        <p className="text-gray-500 mt-1">Preencha os dados e clique em simular.</p>
                                     </div>
                                 )}
                             </div>
-                        )}
+                        </div>
                     </div>
-                    ) : (
-                    <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 h-full flex flex-col justify-center items-center text-center">
-                        <BookUser className="w-12 h-12 text-gray-400 mb-3" />
-                        <h3 className="text-lg font-medium text-gray-700">Simulação de Aposentadoria</h3>
-                        <p className="text-gray-500 mt-1">Preencha os dados e clique em simular.</p>
-                    </div>
-                )}
-                </div>
-            </div>
-        </div>
-        </div >
+                </div >
 
-        <div className="mt-6 bg-white rounded-lg p-5 shadow">
-            <h2 className="text-xl text-black font-bold mb-3">Informações Importantes</h2>
-            <p className="mb-2 text-black">
-                Este simulador utiliza as regras de aposentadoria vigentes e de transição conforme a Emenda Constitucional nº 103/2019, com base no ano de {ANO_ATUAL_REGRAS} para os critérios progressivos.
-            </p>
-            <p className="mb-2 text-gray-700">
-                Os resultados são apenas uma estimativa e não substituem uma análise individualizada por um profissional do direito previdenciário ou consulta ao INSS.
-            </p>
-            <p className="text-gray-700">
-                O cálculo do valor do benefício para as regras de transição por tempo de contribuição (pontos, idade mínima progressiva, pedágios) pode variar e, para uma estimativa precisa, considera-se a média de 100% dos salários de contribuição desde julho de 1994, aplicando-se o coeficiente de 60% + 2% por ano de contribuição que exceder 15 anos (mulher) ou 20 anos (homem), exceto para a regra do pedágio de 100% (100% da média) e pedágio de 50% (média multiplicada pelo fator previdenciário). Esta calculadora foca na elegibilidade.
-            </p>
-        </div>
-      </div >
-    </div >
-  );
+                <div className="mt-6 bg-white rounded-lg p-5 shadow">
+                    <h2 className="text-xl text-black font-bold mb-3">Informações Importantes</h2>
+                    <p className="mb-2 text-black">
+                        Este simulador utiliza as regras de aposentadoria vigentes e de transição conforme a Emenda Constitucional nº 103/2019, com base no ano de {ANO_ATUAL_REGRAS} para os critérios progressivos.
+                    </p>
+                    <p className="mb-2 text-gray-700">
+                        Os resultados são apenas uma estimativa e não substituem uma análise individualizada por um profissional do direito previdenciário ou consulta ao INSS.
+                    </p>
+                    <p className="text-gray-700">
+                        O cálculo do valor do benefício para as regras de transição por tempo de contribuição (pontos, idade mínima progressiva, pedágios) pode variar e, para uma estimativa precisa, considera-se a média de 100% dos salários de contribuição desde julho de 1994, aplicando-se o coeficiente de 60% + 2% por ano de contribuição que exceder 15 anos (mulher) ou 20 anos (homem), exceto para a regra do pedágio de 100% (100% da média) e pedágio de 50% (média multiplicada pelo fator previdenciário). Esta calculadora foca na elegibilidade.
+                    </p>
+                </div>
+            </div >
+        </div >
+    );
 }
