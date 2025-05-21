@@ -438,7 +438,7 @@ export default function AposentadoriaCalculator() {
 
                                 {/* Adicionar histórico de cálculos */}
                                 {showHistory && calculationHistory.length > 0 && (
-                                    <div className="mt-6 bg-white p-5 rounded-lg border border-gray-200">
+                                    <div className="mt-6 bg-white p-5 trounded-lg border border-gray-200">
                                         <div className="flex justify-between items-center mb-3">
                                             <h2 className="text-xl font-semibold text-black">Histórico de Cálculos</h2>
                                             <Button

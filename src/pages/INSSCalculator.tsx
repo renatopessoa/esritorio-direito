@@ -246,7 +246,7 @@ export default function INSSCalculator() {
                                 {showHistory && history.length > 0 && (
                                     <div className="mt-6 bg-white p-5 rounded-lg border border-gray-200">
                                         <div className="flex justify-between items-center mb-3">
-                                            <h2 className="text-xl font-semibold">Histórico de Cálculos</h2>
+                                            <h2 className="text-xl text-black font-poppins">Histórico de Cálculos</h2>
                                             <div className="flex space-x-2">
                                                 <Button
                                                     onClick={downloadCSV}
@@ -268,18 +268,18 @@ export default function INSSCalculator() {
                                             <table className="min-w-full border-collapse">
                                                 <thead>
                                                     <tr className="bg-gray-100">
-                                                        <th className="border border-gray-200 px-3 py-2 text-left">Data</th>
-                                                        <th className="border border-gray-200 px-3 py-2 text-left">Salário</th>
-                                                        <th className="border border-gray-200 px-3 py-2 text-left">INSS</th>
+                                                        <th className="border border-gray-200 text-black px-3 py-2 text-left">Data</th>
+                                                        <th className="border border-gray-200 text-black px-3 py-2 text-left">Salário</th>
+                                                        <th className="border border-gray-200 text-black px-3 py-2 text-left">INSS</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {history.map((item, index) => (
                                                         <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                                            <td className="border border-gray-200 px-3 py-2">
+                                                            <td className="border border-gray-200 text-black px-3 py-2">
                                                                 {item.date.toLocaleDateString('pt-BR')}
                                                             </td>
-                                                            <td className="border border-gray-200 px-3 py-2">
+                                                            <td className="border border-gray-200  text-black px-3 py-2">
                                                                 {formatCurrency(item.salary)}
                                                             </td>
                                                             <td className="border border-gray-200 px-3 py-2 font-medium text-blue-600">
