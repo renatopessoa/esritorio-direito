@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/Button';
-import { Info, Calculator, Calendar, User, ArrowLeft, BookUser } from 'lucide-react';
+import { Info, Calculator, ArrowLeft, BookUser, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 type TipoCalculo =
@@ -17,6 +17,7 @@ interface ResultadoDetalhes {
 }
 
 interface AposentadoriaResult {
+    timestamp: number;
     tipoRegra: string;
     elegivel: boolean;
     mensagemPrincipal: string;
@@ -49,6 +50,9 @@ export default function AposentadoriaCalculator() {
     const [formattedSalarioBrutoOuMedia, setFormattedSalarioBrutoOuMedia] = useState(''); // valor formatado
     const [tempoFaltantePedagioAnos, setTempoFaltantePedagioAnos] = useState('');
     const [tempoFaltantePedagioMeses, setTempoFaltantePedagioMeses] = useState('');
+    // Adicionar estado para histórico de cálculos
+    const [calculationHistory, setCalculationHistory] = useState<AposentadoriaResult[]>([]);
+    const [showHistory, setShowHistory] = useState(false);
 
     const [result, setResult] = useState<AposentadoriaResult | null>(null);
 
@@ -79,6 +83,7 @@ export default function AposentadoriaCalculator() {
             tipoRegra: REGRAS_APOSENTADORIA[tipoCalculo],
             elegivel: false,
             mensagemPrincipal: "Dados insuficientes ou inválidos.",
+            timestamp: 0
         };
 
         if (isNaN(idadeNum) && tipoCalculo !== 'pedagio50') { // Idade não é obrigatória para pedágio 50%
@@ -230,6 +235,17 @@ export default function AposentadoriaCalculator() {
             default:
                 calculatedResult.mensagemPrincipal = "Tipo de cálculo não reconhecido.";
         }
+
+        // Adicionar ao histórico se o cálculo foi bem-sucedido
+        if (calculatedResult.mensagemPrincipal !== "Dados insuficientes ou inválidos." &&
+            calculatedResult.mensagemPrincipal !== "Tipo de cálculo não reconhecido.") {
+            const timestampedResult = {
+                ...calculatedResult,
+                timestamp: Date.now()
+            };
+            setCalculationHistory(prev => [timestampedResult, ...prev.slice(0, 9)]); // Mantém os 10 últimos
+        }
+
         setResult(calculatedResult);
     };
 
@@ -266,6 +282,10 @@ export default function AposentadoriaCalculator() {
                 maximumFractionDigits: 2
             })
         );
+    };
+
+    const clearHistory = () => {
+        setCalculationHistory([]);
     };
 
     const renderDetalhesResultado = (detalhes: ResultadoDetalhes | undefined) => {
@@ -399,16 +419,72 @@ export default function AposentadoriaCalculator() {
                                         </div>
                                     )}
 
-                                    <div>
+                                    <div className="flex flex-wrap gap-3">
                                         <Button type="submit" className="bg-green-600 hover:bg-green-700 px-6 py-3 text-white font-medium rounded-lg flex items-center">
                                             <Calculator className="w-5 h-5 mr-2" />
                                             Simular Aposentadoria
                                         </Button>
+
+                                        <Button
+                                            type="button"
+                                            onClick={() => setShowHistory(!showHistory)}
+                                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-3 font-medium rounded-lg flex items-center"
+                                        >
+                                            <History className="w-5 h-5 mr-2" />
+                                            {showHistory ? 'Ocultar Histórico' : 'Ver Histórico'}
+                                        </Button>
                                     </div>
                                 </form>
-                            </div>
 
-                            <div className="md:col-span-1">
+                                {/* Adicionar histórico de cálculos */}
+                                {showHistory && calculationHistory.length > 0 && (
+                                    <div className="mt-6 bg-white p-5 rounded-lg border border-gray-200">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <h2 className="text-xl font-semibold text-black">Histórico de Cálculos</h2>
+                                            <Button
+                                                onClick={clearHistory}
+                                                className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded"
+                                            >
+                                                Limpar
+                                            </Button>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full border-collapse">
+                                                <thead>
+                                                    <tr className="bg-gray-100">
+                                                        <th className="border border-gray-200 px-3 py-2 text-left text-black">Data</th>
+                                                        <th className="border border-gray-200 px-3 py-2 text-left text-black">Regra</th>
+                                                        <th className="border border-gray-200 px-3 py-2 text-left text-black">Resultado</th>
+                                                        {calculationHistory[0].valorEstimado && (
+                                                            <th className="border border-gray-200 px-3 py-2 text-left text-black">Valor</th>
+                                                        )}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {calculationHistory.map((item, index) => (
+                                                        <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                                            <td className="border border-gray-200 px-3 py-2 text-black">
+                                                                {new Date(item.timestamp || Date.now()).toLocaleDateString('pt-BR')}
+                                                            </td>
+                                                            <td className="border border-gray-200 px-3 py-2 text-black">
+                                                                {item.tipoRegra}
+                                                            </td>
+                                                            <td className={`border border-gray-200 px-3 py-2 font-medium ${item.elegivel ? 'text-green-600' : 'text-red-600'}`}>
+                                                                {item.elegivel ? 'Elegível' : 'Não elegível'}
+                                                            </td>
+                                                            {item.valorEstimado && (
+                                                                <td className="border border-gray-200 px-3 py-2 font-medium text-black">
+                                                                    {formatCurrency(item.valorEstimado)}
+                                                                </td>
+                                                            )}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {result ? (
                                     <div className={`p-5 rounded-lg shadow border-l-4 ${result.elegivel ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
                                         <h2 className={`text-xl font-bold mb-2 ${result.elegivel ? 'text-green-800' : 'text-red-800'}`}>
@@ -444,6 +520,10 @@ export default function AposentadoriaCalculator() {
                                         <p className="text-gray-500 mt-1">Preencha os dados e clique em simular.</p>
                                     </div>
                                 )}
+                            </div>
+
+                            <div className="md:col-span-1">
+                                {/* ...existing code... */}
                             </div>
                         </div>
                     </div>

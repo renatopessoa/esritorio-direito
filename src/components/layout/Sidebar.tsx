@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, Briefcase, Calendar, Settings, BarChart, LogOut, UserPlus, Calculator, NotebookText } from 'lucide-react';
 import { clsx } from 'clsx';

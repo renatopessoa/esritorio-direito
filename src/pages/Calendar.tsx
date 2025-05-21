@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { CalendarHeader } from '../components/calendar/CalendarHeader';
@@ -25,7 +25,7 @@ export default function Calendar() {
     setCurrentDate(new Date());
   };
 
-  const handleEventSubmit = async (data: CalendarEvent) => {
+  const handleEventSubmit = async () => {
     try {
       // Implement event creation/update
       toast.success('Compromisso salvo com sucesso!');

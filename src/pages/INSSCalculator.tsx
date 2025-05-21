@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
-import { Info, Calculator, ArrowLeft, History, Download } from 'lucide-react';
+import { Info, Calculator, History, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const INSS_TABLE_2025 = [
