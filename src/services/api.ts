@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 // Cria uma instância do axios com configurações base
-export const api = axios.create({
+const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
@@ -11,7 +11,7 @@ export const api = axios.create({
 });
 
 // Interceptor para adicionar token de autenticação
-api.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('auth-token');
     if (token) {
@@ -25,7 +25,7 @@ api.interceptors.request.use(
 );
 
 // Interceptor para tratamento de erros
-api.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (!error.response) {
@@ -57,3 +57,33 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Serviços de API organizados por domínio
+const clients = {
+  createClient: async (clientData: any) => {
+    const response = await axiosInstance.post('/clients', clientData);
+    return response.data;
+  },
+  getClients: async () => {
+    const response = await axiosInstance.get('/clients');
+    return response.data;
+  },
+  getClient: async (id: number) => {
+    const response = await axiosInstance.get(`/clients/${id}`);
+    return response.data;
+  },
+  updateClient: async (id: number, clientData: any) => {
+    const response = await axiosInstance.put(`/clients/${id}`, clientData);
+    return response.data;
+  },
+  deleteClient: async (id: number) => {
+    const response = await axiosInstance.delete(`/clients/${id}`);
+    return response.data;
+  },
+};
+
+// API exportada com todos os serviços
+export const api = {
+  clients,
+  // Outros serviços podem ser adicionados aqui
+};

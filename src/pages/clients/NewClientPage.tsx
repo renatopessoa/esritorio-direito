@@ -1,21 +1,21 @@
 import React from 'react';
 import { Typography, Paper, Box } from '@mui/material';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { ClientForm } from '../../components/clients/ClientForm';
-import { clientService } from '../../services/api';
-import { User } from '../../types';
+import { api } from '../../services/api';
 
 export const NewClientPage: React.FC = () => {
   const navigate = useNavigate();
-  const mutation = useMutation(clientService.createClient, {
+  const mutation = useMutation({
+    mutationFn: api.clients.createClient,
     onSuccess: () => {
       navigate('/clients');
     },
   });
 
-  const handleSubmit = (data: Partial<User>) => {
-    mutation.mutate({ ...data, role: 'client' });
+  const handleSubmit = (data: any) => {
+    return mutation.mutateAsync({ ...data, role: 'client' });
   };
 
   return (
@@ -26,7 +26,7 @@ export const NewClientPage: React.FC = () => {
       <Paper sx={{ p: 4, mt: 4 }}>
         <ClientForm
           onSubmit={handleSubmit}
-          isLoading={mutation.isLoading}
+          isLoading={mutation.isPending}
         />
       </Paper>
     </div>

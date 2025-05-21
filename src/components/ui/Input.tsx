@@ -1,39 +1,27 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
-import { clsx } from 'clsx';
+import React, { forwardRef } from 'react';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  error?: boolean;
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  helperText?: string;
+  error?: boolean;  // Indica se há erro (booleano)
+  errorMessage?: string;  // Mensagem de erro (string)
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, label, helperText, id, ...props }, ref) => {
+  ({ label, error, errorMessage, className, ...props }, ref) => {
     return (
-      <div className="space-y-2">
-        {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-foreground">
-            {label}
-          </label>
-        )}
+      <div className="w-full">
+        {label && <label className="block mb-1 text-sm font-medium">{label}</label>}
         <input
+          className={`input-dark w-full ${error ? 'border-red-500' : ''} ${className || ''}`}
           ref={ref}
-          id={id}
-          className={clsx(
-            'input-dark w-full rounded-lg px-3 py-2 shadow-sm',
-            {
-              'border-red-500': error,
-            },
-            className
-          )}
           {...props}
         />
-        {helperText && (
-          <p className={clsx('text-sm', error ? 'text-red-500' : 'text-muted-foreground')}>
-            {helperText}
-          </p>
+        {error && errorMessage && (
+          <p className="mt-1 text-xs text-red-500">{errorMessage}</p>
         )}
       </div>
     );
   }
 );
+
+Input.displayName = 'Input';

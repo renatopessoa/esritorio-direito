@@ -3,6 +3,7 @@ import { Typography, Button, Box } from '@mui/material';
 import { Plus } from 'lucide-react';
 import { ClientList } from '../../components/clients/ClientList';
 import { useNavigate } from 'react-router-dom';
+import { Client } from '../../types/client';
 
 export const ClientsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,7 +23,11 @@ export const ClientsPage: React.FC = () => {
           New Client
         </Button>
       </Box>
-      <ClientList clients={[]} />
+      <ClientList clients={[]} onEdit={function (client: Client): void {
+        throw new Error('Function not implemented.');
+      } } onDelete={function (client: Client): void {
+        throw new Error('Function not implemented.');
+      } } />
     </div>
   );
 };

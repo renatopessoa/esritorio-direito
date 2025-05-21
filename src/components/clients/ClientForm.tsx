@@ -9,13 +9,13 @@ import { clientSchema, type ClientFormData } from '../../lib/validation/clientSc
 import { maskCPF, maskCNPJ, maskPhone, maskCEP } from '../../utils/masks';
 import { searchAddressByCep } from '../../services/viaCep';
 
-interface ClientFormProps {
-  onSubmit: (data: ClientFormData) => Promise<void>;
-  onCancel: () => void;
-  initialData?: Partial<ClientFormData>;
+export interface ClientFormProps {
+  onSubmit: (data: any) => Promise<any>;
+  isLoading?: boolean;
+  initialData?: Partial<ClientFormData>; // Se existir
+  onCancel?: () => void;
 }
-
-export function ClientForm({ onSubmit, onCancel, initialData }: ClientFormProps) {
+export function ClientForm({ onSubmit, isLoading = false, initialData = {}, onCancel }: ClientFormProps) {
   const {
     register,
     handleSubmit,
@@ -67,37 +67,37 @@ export function ClientForm({ onSubmit, onCancel, initialData }: ClientFormProps)
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label="Nome Completo"
-            error={errors.name?.message}
-            {...register('name')}
-          />
-          
+            error={!!errors.name}
+            errorMessage={errors.name?.message}
+            {...register('name')} />
+
           <Input
             label="CPF/CNPJ"
-            error={errors.documentId?.message}
+            error={!!errors.documentId}
+            errorMessage={errors.documentId?.message}
             {...register('documentId', {
               onChange: (e) => {
                 const value = e.target.value.replace(/\D/g, '');
                 e.target.value = value.length <= 11 ? maskCPF(value) : maskCNPJ(value);
               },
-            })}
-          />
-          
+            })} />
+
           <Input
             label="Email"
             type="email"
-            error={errors.email?.message}
-            {...register('email')}
-          />
-          
+            error={!!errors.email}
+            errorMessage={errors.email?.message}
+            {...register('email')} />
+
           <Input
             label="Telefone"
-            error={errors.phone?.message}
+            error={!!errors.phone}
+            errorMessage={errors.phone?.message}
             {...register('phone', {
               onChange: (e) => {
                 e.target.value = maskPhone(e.target.value);
               },
-            })}
-          />
+            })} />
         </div>
       </Card>
 
@@ -105,52 +105,51 @@ export function ClientForm({ onSubmit, onCancel, initialData }: ClientFormProps)
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             label="CEP"
-            error={errors.address?.zipCode?.message}
+            error={!!errors.address?.zipCode}
+            errorMessage={errors.address?.zipCode?.message}
             {...register('address.zipCode', {
               onChange: (e) => {
                 e.target.value = maskCEP(e.target.value);
               },
               onBlur: handleCepBlur,
-            })}
-          />
-          
+            })} />
+
           <div className="md:col-span-2">
             <Input
               label="Rua"
-              error={errors.address?.street?.message}
-              {...register('address.street')}
-            />
+              error={!!errors.address?.street}
+              errorMessage={errors.address?.street?.message}
+              {...register('address.street')} />
           </div>
-          
+
           <Input
             label="Número"
-            error={errors.address?.number?.message}
-            {...register('address.number')}
-          />
-          
+            error={!!errors.address?.number}
+            errorMessage={errors.address?.number?.message}
+            {...register('address.number')} />
+
           <Input
             label="Complemento"
-            {...register('address.complement')}
-          />
-          
+            {...register('address.complement')} />
+
           <Input
             label="Bairro"
-            error={errors.address?.neighborhood?.message}
-            {...register('address.neighborhood')}
-          />
-          
+            error={!!errors.address?.neighborhood}
+            errorMessage={errors.address?.neighborhood?.message}
+            {...register('address.neighborhood')} />
+
           <Input
             label="Cidade"
-            error={errors.address?.city?.message}
-            {...register('address.city')}
-          />
-          
+            error={!!errors.address?.city}
+            errorMessage={errors.address?.city?.message}
+            {...register('address.city')} />
+
           <Input
             label="Estado"
             maxLength={2}
-            error={errors.address?.state?.message}
-            {...register('address.state')}
-          />
+            error={!!errors.address?.state}
+            errorMessage={errors.address?.state?.message}
+            {...register('address.state')} />
         </div>
       </Card>
 
@@ -158,16 +157,15 @@ export function ClientForm({ onSubmit, onCancel, initialData }: ClientFormProps)
         <textarea
           className="input-dark w-full h-32 resize-none"
           placeholder="Observações adicionais sobre o cliente..."
-          {...register('notes')}
-        />
+          {...register('notes')} />
       </Card>
 
       <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Salvando...' : 'Salvar Cliente'}
+        <Button type="submit" disabled={isSubmitting || isLoading}>
+          {isSubmitting || isLoading ? 'Salvando...' : 'Salvar Cliente'}
         </Button>
       </div>
     </form>
