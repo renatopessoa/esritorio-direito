@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, Calendar, Settings, BarChart, LogOut, UserPlus } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Calendar, Settings, BarChart, LogOut, UserPlus, Calculator, NotebookText } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthStore } from '../../stores/useAuthStore';
 
@@ -12,6 +12,8 @@ const menuItems = [
   { icon: BarChart, label: 'Financeiro', path: '/app/financial' },
   { icon: UserPlus, label: 'Cadastro de Usuário', path: '/app/user-registration' },
   { icon: Settings, label: 'Configurações', path: '/app/settings' },
+  { icon: Calculator, label: 'Cálculo INSS', path: '/app/INSSCalculator' },
+  { icon: NotebookText, label: 'Cálculo Aposentadoria', path: '/app/AposentadoriaCalculator' },
 ] as const;
 
 export function Sidebar() {
@@ -41,7 +43,7 @@ export function Sidebar() {
                 }
               )}
             >
-              <item.icon className="w-5 h-5 mr-3" />
+              {item.icon && <item.icon className="w-5 h-5 mr-3" />}
               {item.label}
             </Link>
           );
@@ -49,7 +51,7 @@ export function Sidebar() {
       </nav>
 
       <div className="absolute bottom-0 w-64 p-4 border-t border-white/10">
-        <button 
+        <button
           onClick={handleLogout}
           className="flex items-center w-full px-3 py-2 text-muted-foreground hover:text-white transition-colors"
         >

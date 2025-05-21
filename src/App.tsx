@@ -44,6 +44,7 @@ function App() {
           <Route index element={<Navigate to="/app/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="INSSCalculator" element={<INSSCalculator />} />
+          <Route path="AposentadoriaCalculator" element={<AposentadoriaCalculator />} />
           <Route path="clients" element={<Clients />} />
           <Route path="processes" element={<Processes />} />
           <Route path="documents" element={<Documents />} />
@@ -52,10 +53,6 @@ function App() {
           <Route path="user-registration" element={<UserRegistration />} />
           <Route path="settings" element={<Settings />} />
         </Route>
-
-        {/* Novas rotas adicionadas */}
-        <Route path="/inss" element={<INSSCalculator />} />
-        <Route path="/aposentadoria" element={<AposentadoriaCalculator />} />
 
         {/* Rota para páginas não encontradas */}
         <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
