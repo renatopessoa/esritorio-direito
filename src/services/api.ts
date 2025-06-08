@@ -103,9 +103,41 @@ const documents = {
   }
 };
 
+const jurimetry = {
+  analyzeCase: async (caseData: any) => {
+    const response = await axiosInstance.post('/jurimetry/analyze', caseData);
+    return response.data;
+  },
+  
+  getCaseAnalysis: async (id: number) => {
+    const response = await axiosInstance.get(`/jurimetry/cases/${id}`);
+    return response.data;
+  },
+  
+  getClientAnalyses: async (clientId: number) => {
+    const response = await axiosInstance.get(`/jurimetry/client/${clientId}/analyses`);
+    return response.data;
+  },
+  
+  getJudges: async (court?: string, courtSection?: string) => {
+    const params = new URLSearchParams();
+    if (court) params.append('court', court);
+    if (courtSection) params.append('courtSection', courtSection);
+    
+    const response = await axiosInstance.get(`/jurimetry/judges?${params.toString()}`);
+    return response.data;
+  },
+  
+  updateJudgeProfile: async (judgeId: number, profileData: any) => {
+    const response = await axiosInstance.put(`/jurimetry/judges/${judgeId}/profile`, profileData);
+    return response.data;
+  }
+};
+
 // API exportada com todos os serviços
 export const api = {
   clients,
   documents,
+  jurimetry,
   // Outros serviços podem ser adicionados aqui
 };
