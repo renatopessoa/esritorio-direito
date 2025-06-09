@@ -1,10 +1,10 @@
 import { useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";    
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { FolderOpen, Upload, FileText, Brain, Check, AlertCircle, Eye } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";    
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
+import { Label } from "../ui/label";
+import { LayoutDashboard, Users, Briefcase, Calendar, Settings, BarChart, LogOut, UserPlus, Calculator, NotebookText, FolderOpen, Scale, PenTool, Brain, Check, AlertCircle, FileText, Upload, Eye } from 'lucide-react'; // Adicione os ícones FolderOpen, Scale, PenTool
+import { clsx } from 'clsx';
 
 interface DocumentoAnalisado {
   nome: string;
@@ -24,8 +24,6 @@ interface DocumentoAnalisado {
 export function DocumentClassifier() {
   const [documentos, setDocumentos] = useState<DocumentoAnalisado[]>([]);
   const [dragOver, setDragOver] = useState(false);
-  const { toast } = useToast();
-
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
@@ -113,6 +111,21 @@ export function DocumentClassifier() {
     if (confianca >= 70) return 'text-yellow-600';
     return 'text-red-600';
   };
+
+  const menuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
+    { icon: Users, label: 'Clientes', path: '/app/clients' },
+    { icon: Briefcase, label: 'Processos', path: '/app/processes' },
+    { icon: Calendar, label: 'Agenda', path: '/app/calendar' },
+    { icon: BarChart, label: 'Financeiro', path: '/app/financial' },
+    { icon: Calculator, label: 'Cálculo INSS', path: '/app/INSSCalculator' },
+    { icon: NotebookText, label: 'Cálculo Aposentadoria', path: '/app/AposentadoriaCalculator' },
+    { icon: FolderOpen, label: 'Classificador Docs', path: '/app/ai/document-classifier' },
+    { icon: Scale, label: 'Jurimetria IA', path: '/app/ai/jurimetria-dashboard' },
+    { icon: PenTool, label: 'Redator IA', path: '/app/ai/redator-assistente' },
+    { icon: UserPlus, label: 'Cadastro de Usuário', path: '/app/user-registration' },
+    { icon: Settings, label: 'Configurações', path: '/app/settings' },
+  ] as const;
 
   return (
     <div className="space-y-6">

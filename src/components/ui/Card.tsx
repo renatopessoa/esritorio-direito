@@ -1,25 +1,32 @@
-import { HTMLAttributes } from 'react';
-import { clsx } from 'clsx';
+import React from "react";
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  title?: string;
-}
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-export function Card({ className, title, children, ...props }: CardProps) {
+export function Card({ className, ...props }: CardProps) {
   return (
     <div
-      className={clsx(
-        'glass-card rounded-xl overflow-hidden transition-all duration-200',
-        className
-      )}
+      className={`rounded-lg border bg-white shadow-sm ${className || ""}`}
       {...props}
-    >
-      {title && (
-        <div className="border-b border-white/10 px-6 py-4">
-          <h3 className="text-lg font-medium text-foreground">{title}</h3>
-        </div>
-      )}
-      <div className="p-6">{children}</div>
-    </div>
+    />
   );
+}
+
+interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export function CardHeader({ className, ...props }: CardHeaderProps) {
+  return (
+    <div className={`flex flex-col space-y-1.5 p-6 ${className || ""}`} {...props} />
+  );
+}
+
+interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
+
+export function CardTitle({ className, ...props }: CardTitleProps) {
+  return <h3 className={`text-2xl font-semibold ${className || ""}`} {...props} />;
+}
+
+interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export function CardContent({ className, ...props }: CardContentProps) {
+  return <div className={`p-6 pt-0 ${className || ""}`} {...props} />;
 }

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
+import { Button } from "../ui/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Input } from "../ui/Input";
+import { Label } from "../ui/label";
 import { Scale, TrendingUp, Target, AlertTriangle, Brain, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
@@ -77,7 +77,7 @@ export function JurimetriaDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label>Comarca</Label>
-              <Select value={filtros.comarca} onValueChange={(value) => setFiltros({...filtros, comarca: value})}>
+              <Select value={filtros.comarca} onValueChange={(value: string) => setFiltros({...filtros, comarca: value})}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a comarca" />
                 </SelectTrigger>
@@ -90,7 +90,7 @@ export function JurimetriaDashboard() {
             </div>
             <div>
               <Label>Vara</Label>
-              <Select value={filtros.vara} onValueChange={(value) => setFiltros({...filtros, vara: value})}>
+              <Select value={filtros.vara} onValueChange={(value: string) => setFiltros({...filtros, vara: value})}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a vara" />
                 </SelectTrigger>
@@ -103,7 +103,7 @@ export function JurimetriaDashboard() {
             </div>
             <div>
               <Label>Período</Label>
-              <Select value={filtros.periodo} onValueChange={(value) => setFiltros({...filtros, periodo: value})}>
+              <Select value={filtros.periodo} onValueChange={(value: string) => setFiltros({...filtros, periodo: value})}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
