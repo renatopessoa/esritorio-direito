@@ -2,6 +2,7 @@ import { useEffect, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useThemeStore } from './stores/useThemeStore';
+import { useAuthStore } from './stores/useAuthStore';
 import Layout from './components/Layout';
 import { AuthGuard } from './components/auth/AuthGuard';
 import { lazy } from 'react';
@@ -9,6 +10,7 @@ import { lazy } from 'react';
 // Lazy loading das páginas
 const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Clients = lazy(() => import('./pages/Clients'));
 const Processes = lazy(() => import('./pages/Processes'));
@@ -29,10 +31,15 @@ const LoadingSpinner = () => (
 
 function App() {
   const theme = useThemeStore((state) => state.theme);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   return (
     <BrowserRouter>
@@ -42,6 +49,7 @@ function App() {
           {/* Rotas públicas */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
           {/* Rotas protegidas */}
           <Route

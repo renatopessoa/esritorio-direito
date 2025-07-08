@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import { LoginForm } from '../components/auth/LoginForm';
 import { BackgroundPattern } from '../components/landing/BackgroundPattern';
 import { Scale } from 'lucide-react';
@@ -8,7 +8,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
       <BackgroundPattern />
-      
+
       <div className="w-full max-w-md relative">
         {/* Logo and Title */}
         <div className="text-center mb-8">
@@ -28,9 +28,9 @@ export default function Login() {
             Esqueci minha senha
           </a>
           <span className="text-gray-600 mx-2">•</span>
-          <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">
+          <Link to="/register" className="text-gray-400 hover:text-blue-400 transition-colors">
             Criar conta
-          </a>
+          </Link>
         </div>
       </div>
     </div>

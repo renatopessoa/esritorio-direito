@@ -44,6 +44,56 @@ export interface Database {
           updated_at?: string
         }
       }
+      users: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          role: 'ADMIN' | 'LAWYER' | 'ASSISTANT'
+          cpf: string
+          birth_date: string
+          phone: string
+          landline: string | null
+          address: Json | null
+          position: string
+          avatar_url: string | null
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          name: string
+          email: string
+          role: 'ADMIN' | 'LAWYER' | 'ASSISTANT'
+          cpf: string
+          birth_date: string
+          phone: string
+          landline?: string | null
+          address?: Json | null
+          position: string
+          avatar_url?: string | null
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          role?: 'ADMIN' | 'LAWYER' | 'ASSISTANT'
+          cpf?: string
+          birth_date?: string
+          phone?: string
+          landline?: string | null
+          address?: Json | null
+          position?: string
+          avatar_url?: string | null
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
       client_documents: {
         Row: {
           id: string

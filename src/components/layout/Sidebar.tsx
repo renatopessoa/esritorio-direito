@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, Briefcase, Calendar, Settings, BarChart, LogOut, UserPlus, Calculator, NotebookText } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthStore } from '../../stores/useAuthStore';
+import { toast } from 'sonner';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
@@ -20,9 +21,14 @@ export function Sidebar() {
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Logout realizado com sucesso!');
+      navigate('/login');
+    } catch (error) {
+      toast.error('Erro ao fazer logout');
+    }
   };
 
   return (
