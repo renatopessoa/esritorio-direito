@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import { Button } from "../ui/Button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/Select";
 import { Input } from "../ui/Input";
 import { Label } from "../ui/label";
 import { Scale, TrendingUp, Target, AlertTriangle, Brain, BarChart3 } from "lucide-react";

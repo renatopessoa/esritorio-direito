@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Label } from "../ui/label";
-import { LayoutDashboard, Users, Briefcase, Calendar, Settings, BarChart, LogOut, UserPlus, Calculator, NotebookText, FolderOpen, Scale, PenTool, Brain, Check, AlertCircle, FileText, Upload, Eye } from 'lucide-react'; // Adicione os ícones FolderOpen, Scale, PenTool
-import { clsx } from 'clsx';
+import { LayoutDashboard, Users, Briefcase, Calendar, Settings, BarChart,  UserPlus, Calculator, NotebookText, FolderOpen, Scale, PenTool, Brain, Check, AlertCircle, FileText, Upload, Eye } from 'lucide-react'; // Adicione os ícones FolderOpen, Scale, PenTool
+
 
 interface DocumentoAnalisado {
   nome: string;
