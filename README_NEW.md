@@ -14,6 +14,7 @@
 ## 🎯 INÍCIO RÁPIDO
 
 ### 1️⃣ Instalação
+
 ```bash
 git clone <repository-url>
 cd esritorio-direito
@@ -21,6 +22,7 @@ npm install
 ```
 
 ### 2️⃣ Configuração
+
 ```bash
 # Copie e configure as variáveis de ambiente
 cp .env.example .env
@@ -28,12 +30,15 @@ cp .env.example .env
 ```
 
 ### 3️⃣ Aplicar Migrations
+
 **⚠️ OBRIGATÓRIO:** Vá para [Supabase Dashboard](https://app.supabase.com) > SQL Editor  
 **Execute um dos scripts:**
+
 - `BASIC_MIGRATION.sql` - Para testes rápidos
 - `COMPLETE_MIGRATION.sql` - Para sistema completo
 
 ### 4️⃣ Executar
+
 ```bash
 npm run dev
 # Acesse: http://localhost:5173
@@ -46,12 +51,14 @@ npm run dev
 ## 🚀 FUNCIONALIDADES
 
 ### ✅ Core System
+
 - **🔐 Autenticação Real** - Supabase Auth com roles (ADMIN/LAWYER/SECRETARY)
 - **👥 Gestão de Clientes** - CRUD completo, validação CPF/CNPJ, busca CEP
 - **⚖️ Gestão de Processos** - Acompanhamento completo de processos judiciais
 - **📊 Dashboard Analítico** - Métricas em tempo real, gráficos interativos
 
-### ✅ Funcionalidades Avançadas  
+### ✅ Funcionalidades Avançadas
+
 - **📅 Calendário** - Agendamento de audiências e compromissos
 - **💰 Financeiro** - Controle de honorários, despesas, faturamento
 - **📄 Documentos** - Upload, gerenciamento e templates
@@ -60,6 +67,7 @@ npm run dev
 - **📋 Relatórios** - Geração automática e exportação
 
 ### ✅ UI/UX Moderna
+
 - **🎨 Design System** - Material-UI + Tailwind CSS
 - **📱 Responsivo** - Desktop, tablet e mobile
 - **🌙 Dark Mode** - Alternância de tema
@@ -70,15 +78,17 @@ npm run dev
 ## 🏗️ ARQUITETURA
 
 ### Frontend
+
 ```
 React 18 + TypeScript + Vite
 ├── 🎨 Material-UI + Tailwind CSS
-├── 🔄 Zustand (State Management)  
+├── 🔄 Zustand (State Management)
 ├── 🚦 React Router (Routing)
 └── 📊 Recharts (Data Visualization)
 ```
 
-### Backend  
+### Backend
+
 ```
 Supabase (Backend-as-a-Service)
 ├── 🗄️ PostgreSQL (Database)
@@ -88,6 +98,7 @@ Supabase (Backend-as-a-Service)
 ```
 
 ### Segurança
+
 ```
 Enterprise-Grade Security
 ├── 🛡️ Row Level Security (RLS)
@@ -100,14 +111,14 @@ Enterprise-Grade Security
 
 ## 📊 MÉTRICAS
 
-| Métrica | Valor |
-|---------|-------|
-| **Linhas de Código** | 15.000+ |
-| **Componentes React** | 50+ |
-| **Páginas** | 15+ |
-| **Build Time** | ~2.5s |
-| **Bundle Size** | ~500KB (gzipped) |
-| **Lighthouse Score** | 90+ |
+| Métrica               | Valor            |
+| --------------------- | ---------------- |
+| **Linhas de Código**  | 15.000+          |
+| **Componentes React** | 50+              |
+| **Páginas**           | 15+              |
+| **Build Time**        | ~2.5s            |
+| **Bundle Size**       | ~500KB (gzipped) |
+| **Lighthouse Score**  | 90+              |
 
 ---
 
@@ -115,7 +126,7 @@ Enterprise-Grade Security
 
 ```bash
 npm run dev          # 🚀 Servidor de desenvolvimento
-npm run build        # 📦 Build para produção  
+npm run build        # 📦 Build para produção
 npm run preview      # 👀 Preview do build
 npm run lint         # 🔍 Análise de código
 ```
@@ -125,12 +136,14 @@ npm run lint         # 🔍 Análise de código
 ## 🗄️ CONFIGURAÇÃO DATABASE
 
 ### Supabase Setup
+
 1. 🌐 Crie conta no [Supabase](https://supabase.com)
 2. 🆕 Crie novo projeto
 3. 🔑 Copie credenciais para `.env`
 4. 📝 Execute migration no SQL Editor
 
 ### Environment Variables
+
 ```env
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -140,34 +153,36 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ## 👥 SISTEMA DE USUÁRIOS
 
-| Role | Permissions |
-|------|-------------|
-| **ADMIN** | 🔓 Acesso total ao sistema |
-| **LAWYER** | ⚖️ Gestão de casos e clientes |
-| **SECRETARY** | 📅 Agendamentos e documentos |
+| Role          | Permissions                   |
+| ------------- | ----------------------------- |
+| **ADMIN**     | 🔓 Acesso total ao sistema    |
+| **LAWYER**    | ⚖️ Gestão de casos e clientes |
+| **SECRETARY** | 📅 Agendamentos e documentos  |
 
 ---
 
 ## 📚 DOCUMENTAÇÃO
 
-| Documento | Descrição |
-|-----------|-----------|
-| `PROJECT_STATUS.md` | ✅ Status completo do projeto |
-| `APPLY_MIGRATIONS.md` | 🔧 Como aplicar migrations |
-| `AUTHENTICATION.md` | 🔐 Sistema de autenticação |
-| `DATABASE_STRATEGY.md` | 🗄️ Estratégia de banco |
-| `MIGRATION_ANALYSIS.md` | 📊 Análise técnica |
+| Documento               | Descrição                     |
+| ----------------------- | ----------------------------- |
+| `PROJECT_STATUS.md`     | ✅ Status completo do projeto |
+| `APPLY_MIGRATIONS.md`   | 🔧 Como aplicar migrations    |
+| `AUTHENTICATION.md`     | 🔐 Sistema de autenticação    |
+| `DATABASE_STRATEGY.md`  | 🗄️ Estratégia de banco        |
+| `MIGRATION_ANALYSIS.md` | 📊 Análise técnica            |
 
 ---
 
 ## 🚀 DEPLOY
 
 ### Opções Recomendadas
+
 - **[Vercel](https://vercel.com)** - `vercel --prod`
-- **[Netlify](https://netlify.com)** - `netlify deploy --prod`  
+- **[Netlify](https://netlify.com)** - `netlify deploy --prod`
 - **[GitHub Pages](https://pages.github.com)** - Push para GitHub
 
 ### Build para Produção
+
 ```bash
 npm run build
 # Arquivos em ./dist/
@@ -178,8 +193,9 @@ npm run build
 ## 🏆 STATUS DO PROJETO
 
 ### ✅ Concluído
+
 - [x] Sistema de autenticação real
-- [x] CRUD completo de clientes  
+- [x] CRUD completo de clientes
 - [x] Gestão de processos
 - [x] Dashboard com métricas
 - [x] Sistema financeiro
@@ -190,6 +206,7 @@ npm run build
 - [x] Build otimizado
 
 ### 🔄 Próximos Passos
+
 - [ ] Aplicar migrations no Supabase (5 min)
 - [ ] Testar sistema completo
 - [ ] Deploy em produção
@@ -200,11 +217,13 @@ npm run build
 ## 📞 SUPORTE
 
 ### 🐛 Troubleshooting
+
 - Verifique `APPLY_MIGRATIONS.md` para problemas de setup
 - Logs disponíveis no Supabase Dashboard
 - Documentação inline no código
 
 ### 📖 Recursos
+
 - [Supabase Docs](https://supabase.com/docs)
 - [React Docs](https://react.dev)
 - [Material-UI Docs](https://mui.com)
@@ -222,6 +241,6 @@ Este projeto está sob a licença MIT. Veja [LICENSE](LICENSE) para detalhes.
 
 **✨ JurSys - Transformando a gestão jurídica ✨**
 
-*Sistema profissional, moderno e seguro para escritórios de advocacia*
+_Sistema profissional, moderno e seguro para escritórios de advocacia_
 
 </div>
