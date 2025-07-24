@@ -8,9 +8,10 @@ export interface BaseModel {
 export interface User extends BaseModel {
   name: string;
   email: string;
-  role: 'admin' | 'lawyer' | 'staff' | 'client';
+  role: 'ADMIN' | 'LAWYER' | 'ASSISTANT';
   phone?: string;
   address?: string;
+  active: boolean;
   cases?: Case[];
 }
 
