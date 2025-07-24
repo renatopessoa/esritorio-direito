@@ -1,100 +1,213 @@
-import { ClientFormData } from '../lib/validation/clientSchema';
-import { api } from './api';
-import { handleApiError } from '../utils/apiErrors';
-import { mockApi } from './mockApi';
+import { prisma } from '../lib/prisma'
+import type { Client, ClientDocument } from '@prisma/client'
 
-// Flag para usar a API mock
-const USE_MOCK_API = true;
-
-interface ClientResponse {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  [key: string]: any;
+interface CreateClientData {
+  name: string
+  documentId: string
+  email: string
+  phone: string
+  address: any
+  notes?: string
 }
 
-export async function createClient(data: ClientFormData): Promise<ClientResponse> {
-  try {
-    if (USE_MOCK_API) {
-      return await mockApi.createClient(data);
-    }
+interface UpdateClientData extends Partial<CreateClientData> {}
 
-    const response = await api.post<ClientResponse>('/clients', {
-      ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    return response.data;
-  } catch (error) {
-    throw handleApiError(error, {
-      409: 'Já existe um cliente cadastrado com este CPF/CNPJ',
-      default: 'Erro ao cadastrar cliente. Tente novamente mais tarde.',
-    });
+interface ClientWithDocuments extends Client {
+  documents: ClientDocument[]
+  _count: {
+    processes: number
+    documents: number
   }
 }
 
-export async function updateClient(id: string, data: Partial<ClientFormData>): Promise<ClientResponse> {
-  try {
-    if (USE_MOCK_API) {
-      return await mockApi.updateClient(id, data);
+class ClientService {
+  // Listar clientes com paginação e busca
+  async getClients({
+    page = 1,
+    limit = 20,
+    search = '',
+    sortBy = 'createdAt',
+    sortOrder = 'desc'
+  }: {
+    page?: number
+    limit?: number
+    search?: string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+  } = {}) {
+    const skip = (page - 1) * limit
+    
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { email: { contains: search, mode: 'insensitive' as const } },
+            { documentId: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}
+
+    const [clients, total] = await Promise.all([
+      prisma.client.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder },
+        include: {
+          _count: {
+            select: {
+              processes: true,
+              documents: true,
+            },
+          },
+        },
+      }),
+      prisma.client.count({ where }),
+    ])
+
+    return {
+      data: clients,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    }
+  }
+
+  // Buscar cliente por ID
+  async getClientById(id: string): Promise<ClientWithDocuments | null> {
+    return prisma.client.findUnique({
+      where: { id },
+      include: {
+        documents: {
+          orderBy: { createdAt: 'desc' },
+        },
+        _count: {
+          select: {
+            processes: true,
+            documents: true,
+          },
+        },
+      },
+    })
+  }
+
+  // Criar cliente
+  async createClient(data: CreateClientData): Promise<Client> {
+    // Verificar se documento já existe
+    const existingClient = await prisma.client.findFirst({
+      where: { documentId: data.documentId },
+    })
+
+    if (existingClient) {
+      throw new Error('Cliente com este documento já existe')
     }
 
-    const response = await api.put<ClientResponse>(`/clients/${id}`, {
-      ...data,
-      updatedAt: new Date().toISOString(),
-    });
-    return response.data;
-  } catch (error) {
-    throw handleApiError(error, {
-      404: 'Cliente não encontrado',
-      default: 'Erro ao atualizar cliente. Tente novamente mais tarde.',
-    });
+    return prisma.client.create({
+      data,
+    })
+  }
+
+  // Atualizar cliente
+  async updateClient(id: string, data: UpdateClientData): Promise<Client> {
+    // Verificar se cliente existe
+    const existingClient = await prisma.client.findUnique({
+      where: { id },
+    })
+
+    if (!existingClient) {
+      throw new Error('Cliente não encontrado')
+    }
+
+    // Se está atualizando documento, verificar duplicatas
+    if (data.documentId && data.documentId !== existingClient.documentId) {
+      const duplicateClient = await prisma.client.findFirst({
+        where: {
+          documentId: data.documentId,
+          id: { not: id },
+        },
+      })
+
+      if (duplicateClient) {
+        throw new Error('Cliente com este documento já existe')
+      }
+    }
+
+    return prisma.client.update({
+      where: { id },
+      data,
+    })
+  }
+
+  // Deletar cliente
+  async deleteClient(id: string): Promise<void> {
+    // Verificar se cliente tem processos ativos
+    const processCount = await prisma.process.count({
+      where: { clientId: id },
+    })
+
+    if (processCount > 0) {
+      throw new Error('Não é possível deletar cliente com processos ativos')
+    }
+
+    await prisma.client.delete({
+      where: { id },
+    })
+  }
+
+  // Upload de documento
+  async uploadDocument(clientId: string, file: {
+    name: string
+    url: string
+    size: number
+    type: string
+  }): Promise<ClientDocument> {
+    return prisma.clientDocument.create({
+      data: {
+        clientId,
+        name: file.name,
+        url: file.url,
+        size: file.size,
+        type: file.type,
+      },
+    })
+  }
+
+  // Deletar documento
+  async deleteDocument(documentId: string): Promise<void> {
+    await prisma.clientDocument.delete({
+      where: { id: documentId },
+    })
+  }
+
+  // Estatísticas
+  async getStats() {
+    const [total, thisMonth, thisWeek] = await Promise.all([
+      prisma.client.count(),
+      prisma.client.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          },
+        },
+      }),
+      prisma.client.count({
+        where: {
+          createdAt: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          },
+        },
+      }),
+    ])
+
+    return {
+      total,
+      thisMonth,
+      thisWeek,
+    }
   }
 }
 
-export async function deleteClient(id: string): Promise<void> {
-  try {
-    if (USE_MOCK_API) {
-      await mockApi.deleteClient(id);
-      return;
-    }
-
-    await api.delete(`/clients/${id}`);
-  } catch (error) {
-    throw handleApiError(error, {
-      404: 'Cliente não encontrado',
-      default: 'Erro ao excluir cliente. Tente novamente mais tarde.',
-    });
-  }
-}
-
-export async function getClient(id: string): Promise<ClientResponse> {
-  try {
-    if (USE_MOCK_API) {
-      return await mockApi.getClient(id);
-    }
-
-    const response = await api.get<ClientResponse>(`/clients/${id}`);
-    return response.data;
-  } catch (error) {
-    throw handleApiError(error, {
-      404: 'Cliente não encontrado',
-      default: 'Erro ao buscar cliente. Tente novamente mais tarde.',
-    });
-  }
-}
-
-export async function listClients(): Promise<ClientResponse[]> {
-  try {
-    if (USE_MOCK_API) {
-      return await mockApi.listClients();
-    }
-
-    const response = await api.get<ClientResponse[]>('/clients');
-    return response.data;
-  } catch (error) {
-    throw handleApiError(error, {
-      default: 'Erro ao listar clientes. Tente novamente mais tarde.',
-    });
-  }
-}
+export const clientService = new ClientService()

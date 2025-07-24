@@ -1,241 +1,171 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { supabase } from '../lib/supabase/config';
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { authService } from '../services/authService'
+import type { UserRole } from '@prisma/client'
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'lawyer' | 'assistant';
-  created_at?: string;
-}
-
-const mapRole = (dbRole: 'ADMIN' | 'LAWYER' | 'ASSISTANT'): 'admin' | 'lawyer' | 'assistant' => {
-  switch (dbRole) {
-    case 'ADMIN':
-      return 'admin';
-    case 'LAWYER':
-      return 'lawyer';
-    case 'ASSISTANT':
-      return 'assistant';
-    default:
-      return 'assistant';
+interface RegisterData {
+  name: string
+  email: string
+  password: string
+  role: UserRole
+  cpf: string
+  birthDate: string
+  phone: string
+  landline?: string
+  position: string
+  address?: {
+    zipCode: string
+    street: string
+    number: string
+    complement?: string
+    neighborhood: string
+    city: string
+    state: string
   }
-};
-
-interface AuthStore {
-  user: User | null;
-  session: any | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  register: (email: string, password: string, userData: Partial<User>) => Promise<void>;
-  checkAuth: () => Promise<void>;
-  updateUser: (userData: Partial<User>) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthStore>()(
+interface UpdateProfileData {
+  name?: string
+  email?: string
+  password?: string
+  phone?: string
+  landline?: string
+  position?: string
+  address?: {
+    zipCode: string
+    street: string
+    number: string
+    complement?: string
+    neighborhood: string
+    city: string
+    state: string
+  }
+}
+
+interface AuthUser {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  active: boolean
+}
+
+interface AuthState {
+  user: AuthUser | null
+  token: string | null
+  isLoading: boolean
+  isAuthenticated: boolean
+  
+  // Actions
+  login: (email: string, password: string) => Promise<void>
+  register: (data: RegisterData) => Promise<void>
+  logout: () => void
+  checkAuth: () => Promise<void>
+  updateProfile: (data: UpdateProfileData) => Promise<void>
+}
+
+export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      session: null,
+      token: null,
+      isLoading: false,
       isAuthenticated: false,
-      isLoading: true,
 
       login: async (email: string, password: string) => {
         try {
-          set({ isLoading: true });
+          set({ isLoading: true })
           
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (error) {
-            if (error.message === 'Invalid login credentials') {
-              throw new Error('Email ou senha inválidos');
-            }
-            throw new Error(error.message);
-          }
-
-          if (data.user && data.session) {
-            // Buscar dados do usuário na tabela users
-            const { data: userData, error: userError } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', data.user.id)
-              .single();
-
-            if (userError && userError.code !== 'PGRST116') { // PGRST116 = não encontrado
-              console.error('Error fetching user data:', userError);
-            }
-
-            const user: User = {
-              id: data.user.id,
-              email: data.user.email || '',
-              name: userData?.name || data.user.user_metadata?.name || '',
-              role: userData?.role ? mapRole(userData.role) : 'assistant',
-              created_at: userData?.created_at,
-            };
-
-            set({ 
-              user, 
-              session: data.session, 
-              isAuthenticated: true,
-              isLoading: false 
-            });
-          }
-        } catch (error: any) {
-          set({ isLoading: false });
-          throw error;
+          const { user, token } = await authService.login({ email, password })
+          
+          set({
+            user,
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+          })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
         }
       },
 
-      logout: async () => {
+      register: async (data: RegisterData) => {
         try {
-          await supabase.auth.signOut();
-          set({ 
-            user: null, 
-            session: null, 
-            isAuthenticated: false,
-            isLoading: false 
-          });
-        } catch (error: any) {
-          console.error('Logout error:', error);
+          set({ isLoading: true })
+          
+          const { user, token } = await authService.register(data)
+          
+          set({
+            user,
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+          })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
         }
       },
 
-      register: async (email: string, password: string, userData: Partial<User>) => {
-        try {
-          set({ isLoading: true });
-
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: userData,
-            }
-          });
-
-          if (error) throw new Error(error.message);
-
-          if (data.user) {
-            // Mapear role para o formato do banco
-            const dbRole = userData.role ? userData.role.toUpperCase() as 'ADMIN' | 'LAWYER' | 'ASSISTANT' : 'ASSISTANT';
-            
-            // Criar registro na tabela users
-            const { error: insertError } = await supabase
-              .from('users')
-              .insert([
-                {
-                  id: data.user.id,
-                  email: data.user.email!,
-                  name: userData.name || '',
-                  role: dbRole,
-                  cpf: '', // Temporário - será preenchido no formulário
-                  birth_date: '1990-01-01', // Temporário - será preenchido no formulário
-                  phone: '', // Temporário - será preenchido no formulário
-                  position: userData.role || 'assistant', // Temporário
-                }
-              ]);
-
-            if (insertError) {
-              console.error('Error creating user record:', insertError);
-            }
-          }
-
-          set({ isLoading: false });
-        } catch (error: any) {
-          set({ isLoading: false });
-          throw error;
-        }
+      logout: () => {
+        authService.logout()
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+        })
       },
 
       checkAuth: async () => {
+        const { token } = get()
+        
+        if (!token) {
+          set({ isAuthenticated: false })
+          return
+        }
+
         try {
-          set({ isLoading: true });
-          
-          const { data: { session }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error('Auth check error:', error);
-            set({ isLoading: false, isAuthenticated: false });
-            return;
-          }
-
-          if (session?.user) {
-            // Buscar dados do usuário na tabela users
-            const { data: userData, error: userError } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-
-            if (userError && userError.code !== 'PGRST116') {
-              console.error('Error fetching user data:', userError);
-            }
-
-            const user: User = {
-              id: session.user.id,
-              email: session.user.email || '',
-              name: userData?.name || session.user.user_metadata?.name || '',
-              role: userData?.role ? mapRole(userData.role) : 'assistant',
-              created_at: userData?.created_at,
-            };
-
-            set({ 
-              user, 
-              session, 
-              isAuthenticated: true,
-              isLoading: false 
-            });
-          } else {
-            set({ 
-              user: null, 
-              session: null, 
-              isAuthenticated: false,
-              isLoading: false 
-            });
-          }
-        } catch (error: any) {
-          console.error('Auth check error:', error);
-          set({ 
-            user: null, 
-            session: null, 
+          const user = await authService.verifyToken(token)
+          set({
+            user,
+            isAuthenticated: true,
+          })
+        } catch {
+          set({
+            user: null,
+            token: null,
             isAuthenticated: false,
-            isLoading: false 
-          });
+          })
         }
       },
 
-      updateUser: async (userData: Partial<User>) => {
+      updateProfile: async (data: UpdateProfileData) => {
+        const { user } = get()
+        if (!user) throw new Error('Usuário não autenticado')
+
         try {
-          const currentUser = get().user;
-          if (!currentUser) throw new Error('Usuário não autenticado');
-
-          const { error } = await supabase
-            .from('users')
-            .update(userData)
-            .eq('id', currentUser.id);
-
-          if (error) throw new Error(error.message);
-
-          set({ 
-            user: { ...currentUser, ...userData } 
-          });
-        } catch (error: any) {
-          console.error('Update user error:', error);
-          throw error;
+          set({ isLoading: true })
+          
+          const updatedUser = await authService.updateProfile(user.id, data)
+          
+          set({
+            user: updatedUser,
+            isLoading: false,
+          })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
         }
       },
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         user: state.user,
-        isAuthenticated: state.isAuthenticated 
+        token: state.token,
+        isAuthenticated: state.isAuthenticated,
       }),
     }
   )
-);
+)

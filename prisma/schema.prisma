@@ -1,0 +1,269 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tabela de usuários
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  role        UserRole @default(ASSISTANT)
+  cpf         String   @unique
+  birthDate   DateTime @map("birth_date")
+  phone       String
+  landline    String?
+  address     Json?
+  position    String
+  avatarUrl   String?  @map("avatar_url")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  responsibleProcesses Process[] @relation("ResponsibleUser")
+  calendarEvents      CalendarEvent[]
+  financialRecords    FinancialRecord[]
+
+  @@map("users")
+}
+
+// Tabela de clientes
+model Client {
+  id         String   @id @default(uuid())
+  name       String
+  documentId String   @map("document_id")
+  email      String
+  phone      String
+  address    Json
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  processes        Process[]
+  documents        ClientDocument[]
+  financialRecords FinancialRecord[]
+
+  @@map("clients")
+}
+
+// Tabela de documentos dos clientes
+model ClientDocument {
+  id        String   @id @default(uuid())
+  clientId  String   @map("client_id")
+  name      String
+  url       String
+  size      Int
+  type      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relacionamentos
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_documents")
+}
+
+// Tabela de processos
+model Process {
+  id            String        @id @default(uuid())
+  number        String        @unique
+  clientId      String        @map("client_id")
+  responsibleId String        @map("responsible_id")
+  type          ProcessType
+  subject       String
+  description   String?
+  court         Json
+  value         Decimal       @db.Decimal(15, 2)
+  status        ProcessStatus @default(ACTIVE)
+  priority      Priority      @default(MEDIUM)
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  client           Client            @relation(fields: [clientId], references: [id])
+  responsible      User              @relation("ResponsibleUser", fields: [responsibleId], references: [id])
+  deadlines        ProcessDeadline[]
+  documents        ProcessDocument[]
+  financialRecords FinancialRecord[]
+
+  @@map("processes")
+}
+
+// Tabela de prazos dos processos
+model ProcessDeadline {
+  id          String         @id @default(uuid())
+  processId   String         @map("process_id")
+  title       String
+  description String?
+  date        DateTime
+  type        DeadlineType
+  status      DeadlineStatus @default(PENDING)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  process Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  @@map("process_deadlines")
+}
+
+// Tabela de documentos dos processos
+model ProcessDocument {
+  id         String   @id @default(uuid())
+  processId  String   @map("process_id")
+  title      String
+  type       String
+  url        String
+  version    Int      @default(1)
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  // Relacionamentos
+  process Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  @@map("process_documents")
+}
+
+// Tabela de eventos do calendário
+model CalendarEvent {
+  id           String        @id @default(uuid())
+  title        String
+  start        DateTime
+  end          DateTime
+  description  String?
+  location     String?
+  category     EventCategory @default(OTHER)
+  recurrence   Json?
+  participants String[]
+  reminders    Json?
+  color        String?
+  userId       String        @map("user_id")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("calendar_events")
+}
+
+// Tabela de registros financeiros
+model FinancialRecord {
+  id            String              @id @default(uuid())
+  processId     String?             @map("process_id")
+  clientId      String?             @map("client_id")
+  userId        String              @map("user_id")
+  type          FinancialType
+  category      FinancialCategory
+  description   String
+  amount        Decimal             @db.Decimal(15, 2)
+  date          DateTime
+  dueDate       DateTime?           @map("due_date")
+  status        FinancialStatus     @default(PENDING)
+  paymentMethod PaymentMethod?
+  attachments   Json?
+  notes         String?
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  process Process? @relation(fields: [processId], references: [id])
+  client  Client?  @relation(fields: [clientId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@map("financial_records")
+}
+
+// Tabela de auditoria
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  action    String
+  tableName String   @map("table_name")
+  recordId  String   @map("record_id")
+  oldData   Json?
+  newData   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("audit_log")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  LAWYER
+  ASSISTANT
+}
+
+enum ProcessType {
+  CIVIL
+  CRIMINAL
+  LABOR
+  TAX
+  OTHER
+}
+
+enum ProcessStatus {
+  ACTIVE
+  ARCHIVED
+  SUSPENDED
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum DeadlineType {
+  HEARING
+  PETITION
+  MEETING
+  OTHER
+}
+
+enum DeadlineStatus {
+  PENDING
+  COMPLETED
+  CANCELED
+}
+
+enum EventCategory {
+  MEETING
+  EVENT
+  TASK
+  HEARING
+  DEADLINE
+  OTHER
+}
+
+enum FinancialType {
+  INCOME
+  EXPENSE
+}
+
+enum FinancialCategory {
+  FEE
+  COURT_COST
+  TRAVEL
+  OTHER
+}
+
+enum FinancialStatus {
+  PAID
+  PENDING
+  OVERDUE
+  CANCELED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  BANK_TRANSFER
+  OTHER
+}
