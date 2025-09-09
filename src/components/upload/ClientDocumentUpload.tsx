@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileUpload } from './FileUpload';
 import { Card } from '../ui/Card';
-import { uploadClientDocument } from '../../lib/supabase/storage';
+import { uploadClientDocument } from '../../services/api/upload';
 import { toast } from 'sonner';
 
 interface ClientDocumentUploadProps {

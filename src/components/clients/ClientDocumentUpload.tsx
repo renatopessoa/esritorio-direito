@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileUpload } from '../upload/FileUpload';
 import { Card } from '../ui/Card';
-import { uploadClientDocument } from '../../lib/supabase/storage';
+import { uploadClientDocument } from '../../services/api/upload';
 import { toast } from 'sonner';
 
 interface ClientDocumentUploadProps {
@@ -20,7 +20,7 @@ export function ClientDocumentUpload({ clientId, onUpload }: ClientDocumentUploa
       const uploadedDocs = await Promise.all(
         files.map(file => uploadClientDocument(clientId, file))
       );
-      
+
       onUpload?.(uploadedDocs);
       toast.success('Documentos enviados com sucesso!');
     } catch (error) {

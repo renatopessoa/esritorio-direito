@@ -14,7 +14,11 @@ const registerSchema = z.object({
     email: z.string().email('Email inválido'),
     password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
     confirmPassword: z.string(),
-    role: z.enum(['admin', 'lawyer', 'assistant']),
+    role: z.enum(['ADMIN', 'LAWYER', 'ASSISTANT']),
+    cpf: z.string().min(11, 'CPF deve ter 11 dígitos').max(14, 'CPF inválido'),
+    birthDate: z.string().min(1, 'Data de nascimento é obrigatória'),
+    phone: z.string().min(10, 'Telefone deve ter no mínimo 10 dígitos'),
+    position: z.string().min(2, 'Cargo deve ter no mínimo 2 caracteres'),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Senhas não coincidem",
     path: ["confirmPassword"],
@@ -38,14 +42,20 @@ export function RegisterForm() {
     const onSubmit = async (data: RegisterFormData) => {
         try {
             setIsLoading(true);
-            await registerUser(data.email, data.password, {
+            await registerUser({
+                email: data.email,
+                password: data.password,
                 name: data.name,
                 role: data.role,
+                cpf: data.cpf,
+                birthDate: data.birthDate,
+                phone: data.phone,
+                position: data.position,
             });
             toast.success('Conta criada com sucesso! Verifique seu email para ativar a conta.');
             navigate('/login');
-        } catch (error: any) {
-            toast.error(error.message || 'Erro ao criar conta');
+        } catch (error: unknown) {
+            toast.error((error as Error).message || 'Erro ao criar conta');
         } finally {
             setIsLoading(false);
         }
@@ -53,11 +63,11 @@ export function RegisterForm() {
 
     const getRoleLabel = (role: string) => {
         switch (role) {
-            case 'admin':
+            case 'ADMIN':
                 return 'Administrador';
-            case 'lawyer':
+            case 'LAWYER':
                 return 'Advogado';
-            case 'assistant':
+            case 'ASSISTANT':
                 return 'Assistente';
             default:
                 return 'Usuário';
@@ -99,6 +109,23 @@ export function RegisterForm() {
                                 )}
                             </div>
 
+                            {/* CPF */}
+                            <div>
+                                <label htmlFor="cpf" className="block text-sm font-medium text-gray-300 mb-2">
+                                    CPF
+                                </label>
+                                <input
+                                    type="text"
+                                    id="cpf"
+                                    className="input-dark w-full"
+                                    placeholder="000.000.000-00"
+                                    {...register('cpf')}
+                                />
+                                {errors.cpf && (
+                                    <p className="text-sm text-red-400 mt-1">{errors.cpf.message}</p>
+                                )}
+                            </div>
+
                             {/* Email */}
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
@@ -116,6 +143,39 @@ export function RegisterForm() {
                                 )}
                             </div>
 
+                            {/* Data de Nascimento */}
+                            <div>
+                                <label htmlFor="birthDate" className="block text-sm font-medium text-gray-300 mb-2">
+                                    Data de Nascimento
+                                </label>
+                                <input
+                                    type="date"
+                                    id="birthDate"
+                                    className="input-dark w-full"
+                                    {...register('birthDate')}
+                                />
+                                {errors.birthDate && (
+                                    <p className="text-sm text-red-400 mt-1">{errors.birthDate.message}</p>
+                                )}
+                            </div>
+
+                            {/* Telefone */}
+                            <div>
+                                <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+                                    Telefone
+                                </label>
+                                <input
+                                    type="tel"
+                                    id="phone"
+                                    className="input-dark w-full"
+                                    placeholder="(11) 99999-9999"
+                                    {...register('phone')}
+                                />
+                                {errors.phone && (
+                                    <p className="text-sm text-red-400 mt-1">{errors.phone.message}</p>
+                                )}
+                            </div>
+
                             {/* Role */}
                             <div>
                                 <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-2">
@@ -127,12 +187,29 @@ export function RegisterForm() {
                                     {...register('role')}
                                 >
                                     <option value="">Selecione uma função</option>
-                                    <option value="assistant">{getRoleLabel('assistant')}</option>
-                                    <option value="lawyer">{getRoleLabel('lawyer')}</option>
-                                    <option value="admin">{getRoleLabel('admin')}</option>
+                                    <option value="ASSISTANT">{getRoleLabel('ASSISTANT')}</option>
+                                    <option value="LAWYER">{getRoleLabel('LAWYER')}</option>
+                                    <option value="ADMIN">{getRoleLabel('ADMIN')}</option>
                                 </select>
                                 {errors.role && (
                                     <p className="text-sm text-red-400 mt-1">{errors.role.message}</p>
+                                )}
+                            </div>
+
+                            {/* Cargo */}
+                            <div>
+                                <label htmlFor="position" className="block text-sm font-medium text-gray-300 mb-2">
+                                    Cargo
+                                </label>
+                                <input
+                                    type="text"
+                                    id="position"
+                                    className="input-dark w-full"
+                                    placeholder="Ex: Advogado Sênior, Assistente Jurídico"
+                                    {...register('position')}
+                                />
+                                {errors.position && (
+                                    <p className="text-sm text-red-400 mt-1">{errors.position.message}</p>
                                 )}
                             </div>
 

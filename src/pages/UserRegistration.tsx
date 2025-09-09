@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -7,8 +7,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { AddressForm } from '../components/users/AddressForm';
-import { PasswordStrengthIndicator } from '../components/users/PasswordStrengthIndicator';
-import { createUser } from '../lib/supabase/queries/users';
+import { createUser } from '../services/api/users';
 import { userSchema, userRoles, positionsByRole, type UserFormData } from '../types/user';
 import { maskCPF, maskPhone } from '../utils/masks';
 import { searchAddressByCep } from '../services/viaCep';
@@ -16,18 +15,19 @@ import { searchAddressByCep } from '../services/viaCep';
 export default function UserRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  
+
   const {
     register,
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState,
   } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
   });
 
-  const password = watch('password');
+  const { errors } = formState;
+
   const selectedRole = watch('role');
 
   const handleCepBlur = async (cep: string) => {
@@ -40,7 +40,7 @@ export default function UserRegistration() {
         setValue('address.city', address.localidade);
         setValue('address.state', address.uf);
       }
-    } catch (error) {
+    } catch {
       toast.error('CEP não encontrado');
     }
   };
@@ -51,9 +51,9 @@ export default function UserRegistration() {
       await createUser(data);
       toast.success('Usuário cadastrado com sucesso!');
       navigate('/app/settings');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating user:', error);
-      toast.error(error.message || 'Erro ao cadastrar usuário');
+      toast.error((error as Error).message || 'Erro ao cadastrar usuário');
     } finally {
       setIsSubmitting(false);
     }
@@ -68,16 +68,18 @@ export default function UserRegistration() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Nome Completo"
-              error={errors.name?.message}
+              error={!!errors.name}
+              errorMessage={errors.name?.message}
               {...register('name')}
             />
-            
             <Input
               label="Email"
               type="email"
-              error={errors.email?.message}
+              error={!!errors.email}
+              errorMessage={errors.email?.message}
               {...register('email')}
             />
+
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-300">
@@ -119,34 +121,35 @@ export default function UserRegistration() {
                 <p className="text-sm text-red-400">{errors.position.message}</p>
               )}
             </div>
-            
+
             <Input
               label="CPF"
-              error={errors.cpf?.message}
+              error={!!errors.cpf}
+              errorMessage={errors.cpf?.message}
               {...register('cpf', {
                 onChange: (e) => {
                   e.target.value = maskCPF(e.target.value);
                 },
               })}
             />
-            
             <Input
               label="Data de Nascimento"
               type="date"
-              error={errors.birthDate?.message}
+              error={!!errors.birthDate}
+              errorMessage={errors.birthDate?.message}
               {...register('birthDate')}
             />
-            
             <Input
               label="Celular"
-              error={errors.phone?.message}
+              error={!!errors.phone}
+              errorMessage={errors.phone?.message}
               {...register('phone', {
                 onChange: (e) => {
                   e.target.value = maskPhone(e.target.value);
                 },
               })}
             />
-            
+
             <Input
               label="Telefone Fixo"
               {...register('landline', {
@@ -158,22 +161,20 @@ export default function UserRegistration() {
           </div>
         </Card>
 
-        <Card title="Senha">
+        <Card title="Segurança">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <Input
-                label="Senha"
-                type="password"
-                error={errors.password?.message}
-                {...register('password')}
-              />
-              <PasswordStrengthIndicator password={password || ''} />
-            </div>
-            
+            <Input
+              label="Senha"
+              type="password"
+              error={!!errors.password}
+              errorMessage={errors.password?.message}
+              {...register('password')}
+            />
             <Input
               label="Confirmar Senha"
               type="password"
-              error={errors.confirmPassword?.message}
+              error={!!errors.confirmPassword}
+              errorMessage={errors.confirmPassword?.message}
               {...register('confirmPassword')}
             />
           </div>
@@ -181,7 +182,7 @@ export default function UserRegistration() {
 
         <AddressForm
           register={register}
-          formState={{ errors }}
+          formState={formState}
           onCepBlur={handleCepBlur}
         />
 

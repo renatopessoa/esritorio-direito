@@ -1,28 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { authService } from '../services/api/auth'
-import type { UserRole } from '@prisma/client'
-
-interface RegisterData {
-  name: string
-  email: string
-  password: string
-  role: UserRole
-  cpf: string
-  birthDate: string
-  phone: string
-  landline?: string
-  position: string
-  address?: {
-    zipCode: string
-    street: string
-    number: string
-    complement?: string
-    neighborhood: string
-    city: string
-    state: string
-  }
-}
+import type { RegisterData, AuthUser } from '../lib/auth'
 
 interface UpdateProfileData {
   name?: string
@@ -40,14 +19,6 @@ interface UpdateProfileData {
     city: string
     state: string
   }
-}
-
-interface AuthUser {
-  id: string
-  name: string
-  email: string
-  role: UserRole
-  active: boolean
 }
 
 interface AuthState {

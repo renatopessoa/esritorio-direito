@@ -7,7 +7,7 @@ import { ClientForm } from '../components/clients/ClientForm';
 import { EditClientDialog } from '../components/dialogs/EditClientDialog';
 import { DeleteConfirmDialog } from '../components/dialogs/DeleteConfirmDialog';
 import { useClientStore } from '../stores/useClientStore';
-import { createClient, updateClient, deleteClient, listClients } from '../lib/supabase/queries/clients';
+import { createClient, updateClient, deleteClient, listClients } from '../services/api/clients';
 import type { Client } from '../types/client';
 import type { ClientFormData } from '../lib/validation/clientSchema';
 import { toast } from 'sonner';
@@ -19,7 +19,7 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
+
   const { clients, setClients, addClient, updateClientInStore, removeClient } = useClientStore();
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function Clients() {
 
   const handleEdit = async (data: ClientFormData) => {
     if (!selectedClient) return;
-    
+
     try {
       const updatedClient = await updateClient(selectedClient.id, data);
       updateClientInStore(selectedClient.id, updatedClient);
@@ -70,7 +70,7 @@ export default function Clients() {
 
   const handleDelete = async () => {
     if (!selectedClient) return;
-    
+
     try {
       await deleteClient(selectedClient.id);
       removeClient(selectedClient.id);
@@ -82,7 +82,7 @@ export default function Clients() {
     }
   };
 
-  const filteredClients = clients.filter(client => 
+  const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.document_id.includes(searchTerm)
   );
@@ -98,7 +98,7 @@ export default function Clients() {
       </div>
 
       {isFormOpen ? (
-        <ClientForm 
+        <ClientForm
           onSubmit={handleCreate}
           onCancel={() => setIsFormOpen(false)}
         />
@@ -122,7 +122,7 @@ export default function Clients() {
           {isLoading ? (
             <div className="text-center py-8 text-gray-400">Carregando...</div>
           ) : (
-            <ClientList 
+            <ClientList
               clients={filteredClients}
               onEdit={(client) => {
                 setSelectedClient(client);
