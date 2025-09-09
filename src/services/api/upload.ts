@@ -8,10 +8,12 @@ export interface UploadResult {
   type: string;
 }
 
-export const uploadClientDocument = async (clientId: string, file: File): Promise<UploadResult> => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const uploadClientDocument = async (_clientId: string, file: File): Promise<UploadResult> => {
   // Por enquanto, vamos simular o upload
   // Em uma implementação real, você poderia usar um serviço como AWS S3, 
   // Google Cloud Storage ou armazenar os arquivos localmente
+  // clientId será usado quando implementarmos persistência real
 
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -29,8 +31,10 @@ export const uploadClientDocument = async (clientId: string, file: File): Promis
   });
 };
 
-export const deleteClientDocument = async (documentId: string): Promise<void> => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const deleteClientDocument = async (_documentId: string): Promise<void> => {
   // Simulação de exclusão
+  // documentId será usado quando implementarmos persistência real
   return new Promise((resolve) => {
     setTimeout(() => {
       toast.success('Documento excluído com sucesso!');
@@ -39,8 +43,10 @@ export const deleteClientDocument = async (documentId: string): Promise<void> =>
   });
 };
 
-export const getClientDocuments = async (clientId: string): Promise<UploadResult[]> => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getClientDocuments = async (_clientId: string): Promise<UploadResult[]> => {
   // Simulação de listagem de documentos
+  // clientId será usado quando implementarmos persistência real
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([]);

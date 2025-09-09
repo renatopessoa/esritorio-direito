@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -22,34 +22,43 @@ export default function Clients() {
 
   const { clients, setClients, addClient, updateClientInStore, removeClient } = useClientStore();
 
-  useEffect(() => {
-    loadClients();
-  }, []);
-
-  async function loadClients() {
+  const loadClients = useCallback(async () => {
     try {
       const data = await listClients();
       setClients(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading clients:', error);
       toast.error('Erro ao carregar clientes');
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [setClients]);
+
+  useEffect(() => {
+    loadClients();
+  }, [loadClients]);
 
   const handleCreate = async (data: ClientFormData) => {
     try {
-      const newClient = await createClient(data);
+      const clientData = {
+        name: data.name,
+        document_id: data.documentId,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        notes: data.notes
+      };
+      const newClient = await createClient(clientData);
       addClient(newClient);
       setIsFormOpen(false);
       toast.success('Cliente cadastrado com sucesso!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating client:', error);
-      if (error.message.includes('23505')) {
+      const errorMessage = (error as Error).message;
+      if (errorMessage.includes('23505')) {
         toast.error('Já existe um cliente com este CPF/CNPJ ou email');
       } else {
-        toast.error(error.message || 'Erro ao cadastrar cliente');
+        toast.error(errorMessage || 'Erro ao cadastrar cliente');
       }
     }
   };
@@ -58,13 +67,21 @@ export default function Clients() {
     if (!selectedClient) return;
 
     try {
-      const updatedClient = await updateClient(selectedClient.id, data);
+      const clientData = {
+        name: data.name,
+        document_id: data.documentId,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        notes: data.notes
+      };
+      const updatedClient = await updateClient(selectedClient.id, clientData);
       updateClientInStore(selectedClient.id, updatedClient);
       setIsEditDialogOpen(false);
       toast.success('Cliente atualizado com sucesso!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating client:', error);
-      toast.error(error.message || 'Erro ao atualizar cliente');
+      toast.error((error as Error).message || 'Erro ao atualizar cliente');
     }
   };
 
@@ -76,9 +93,9 @@ export default function Clients() {
       removeClient(selectedClient.id);
       setIsDeleteDialogOpen(false);
       toast.success('Cliente excluído com sucesso!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting client:', error);
-      toast.error(error.message || 'Erro ao excluir cliente');
+      toast.error((error as Error).message || 'Erro ao excluir cliente');
     }
   };
 

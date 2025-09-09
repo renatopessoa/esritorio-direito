@@ -3,7 +3,6 @@ import { UseFormRegister, FormState } from 'react-hook-form';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
 import { maskCEP } from '../../utils/masks';
-import { searchAddressByCep } from '../../services/viaCep';
 import type { UserFormData } from '../../types/user';
 
 interface AddressFormProps {
@@ -18,7 +17,8 @@ export function AddressForm({ register, formState: { errors }, onCepBlur }: Addr
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Input
           label="CEP"
-          error={errors.address?.zipCode?.message}
+          error={!!errors.address?.zipCode}
+          errorMessage={errors.address?.zipCode?.message}
           {...register('address.zipCode', {
             onChange: (e) => {
               e.target.value = maskCEP(e.target.value);
@@ -26,42 +26,43 @@ export function AddressForm({ register, formState: { errors }, onCepBlur }: Addr
             onBlur: (e) => onCepBlur(e.target.value),
           })}
         />
-        
         <div className="md:col-span-2">
           <Input
             label="Rua"
-            error={errors.address?.street?.message}
+            error={!!errors.address?.street}
+            errorMessage={errors.address?.street?.message}
             {...register('address.street')}
           />
         </div>
-        
         <Input
           label="Número"
-          error={errors.address?.number?.message}
+          error={!!errors.address?.number}
+          errorMessage={errors.address?.number?.message}
           {...register('address.number')}
         />
-        
         <Input
           label="Complemento"
+          error={!!errors.address?.complement}
+          errorMessage={errors.address?.complement?.message}
           {...register('address.complement')}
         />
-        
         <Input
           label="Bairro"
-          error={errors.address?.neighborhood?.message}
+          error={!!errors.address?.neighborhood}
+          errorMessage={errors.address?.neighborhood?.message}
           {...register('address.neighborhood')}
         />
-        
         <Input
           label="Cidade"
-          error={errors.address?.city?.message}
+          error={!!errors.address?.city}
+          errorMessage={errors.address?.city?.message}
           {...register('address.city')}
         />
-        
         <Input
           label="Estado"
           maxLength={2}
-          error={errors.address?.state?.message}
+          error={!!errors.address?.state}
+          errorMessage={errors.address?.state?.message}
           {...register('address.state')}
         />
       </div>
