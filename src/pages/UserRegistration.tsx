@@ -7,7 +7,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { AddressForm } from '../components/users/AddressForm';
-import { createUser } from '../services/api/users';
+import { createUser } from '../services/userService';
 import { userSchema, userRoles, positionsByRole, type UserFormData } from '../types/user';
 import { maskCPF, maskPhone } from '../utils/masks';
 import { searchAddressByCep } from '../services/viaCep';

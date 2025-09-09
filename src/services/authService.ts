@@ -1,7 +1,12 @@
-import * as bcrypt from 'bcryptjs'
-import * as jwt from 'jsonwebtoken'
-import { prisma } from '../lib/prisma'
-import type { UserRole } from '@prisma/client'
+import axios from 'axios'
+
+const axiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+})
 
 interface LoginCredentials {
   email: string
@@ -12,180 +17,144 @@ interface RegisterData {
   name: string
   email: string
   password: string
-  role: UserRole
+  role: string
   cpf: string
   birthDate: string
   phone: string
   landline?: string
   position: string
-  address?: any
+  address?: {
+    zipCode: string
+    street: string
+    number: string
+    complement?: string
+    neighborhood: string
+    city: string
+    state: string
+  }
 }
 
 interface AuthUser {
   id: string
   name: string
   email: string
-  role: UserRole
+  role: 'ADMIN' | 'LAWYER' | 'ASSISTANT'
   active: boolean
 }
 
+interface AuthResponse {
+  user: AuthUser
+  token: string
+}
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
+
+interface TokenPayload {
+  userId: string
+  email: string
+  role: string
+  exp: number
+  iat: number
+}
+
 class AuthService {
-  private readonly JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
-  private readonly JWT_EXPIRES_IN = '7d'
-
   // Login
-  async login(credentials: LoginCredentials): Promise<{ user: AuthUser; token: string }> {
-    const { email, password } = credentials
-
-    // Buscar usuário
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        password: true,
-        role: true,
-        active: true,
-      },
-    })
-
-    if (!user) {
-      throw new Error('Usuário não encontrado')
-    }
-
-    if (!user.active) {
-      throw new Error('Usuário inativo')
-    }
-
-    // Verificar senha
-    const isValidPassword = await bcrypt.compare(password, user.password)
-    if (!isValidPassword) {
-      throw new Error('Senha inválida')
-    }
-
-    // Gerar token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      this.JWT_SECRET,
-      { expiresIn: this.JWT_EXPIRES_IN }
-    )
-
-    // Retornar dados sem senha
-    const { password: _, ...userWithoutPassword } = user
-
-    return {
-      user: userWithoutPassword,
-      token,
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    try {
+      const response = await axiosInstance.post<AuthResponse>('/auth/login', credentials)
+      return response.data
+    } catch (error) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || 'Erro ao fazer login')
     }
   }
 
   // Registro
-  async register(data: RegisterData): Promise<{ user: AuthUser; token: string }> {
-    // Verificar se email já existe
-    const existingUser = await prisma.user.findUnique({
-      where: { email: data.email },
-    })
-
-    if (existingUser) {
-      throw new Error('Email já cadastrado')
+  async register(data: RegisterData): Promise<AuthResponse> {
+    try {
+      const response = await axiosInstance.post<AuthResponse>('/auth/register', data)
+      return response.data
+    } catch (error) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || 'Erro ao fazer cadastro')
     }
-
-    // Verificar se CPF já existe
-    const existingCpf = await prisma.user.findUnique({
-      where: { cpf: data.cpf },
-    })
-
-    if (existingCpf) {
-      throw new Error('CPF já cadastrado')
-    }
-
-    // Hash da senha
-    const hashedPassword = await bcrypt.hash(data.password, 12)
-
-    // Criar usuário
-    const user = await prisma.user.create({
-      data: {
-        ...data,
-        password: hashedPassword,
-        birthDate: new Date(data.birthDate),
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        active: true,
-      },
-    })
-
-    // Gerar token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      this.JWT_SECRET,
-      { expiresIn: this.JWT_EXPIRES_IN }
-    )
-
-    return { user, token }
   }
 
   // Verificar token
   async verifyToken(token: string): Promise<AuthUser> {
     try {
-      const decoded = jwt.verify(token, this.JWT_SECRET) as any
-      
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.userId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          active: true,
-        },
+      const response = await axiosInstance.get<{ user: AuthUser }>('/auth/me', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       })
-
-      if (!user || !user.active) {
-        throw new Error('Usuário inválido')
-      }
-
-      return user
-    } catch (error) {
+      return response.data.user
+    } catch {
       throw new Error('Token inválido')
     }
   }
 
-  // Logout (invalidar token no frontend)
+  // Logout (remover token do frontend)
   async logout(): Promise<void> {
-    // No caso de JWT, o logout é feito removendo o token do frontend
-    // Aqui podemos implementar uma blacklist se necessário
+    // Remove o token do localStorage
+    localStorage.removeItem('token')
   }
 
   // Atualizar perfil
   async updateProfile(userId: string, data: Partial<RegisterData>): Promise<AuthUser> {
-    const updateData: any = { ...data }
-    
-    if (data.password) {
-      updateData.password = await bcrypt.hash(data.password, 12)
+    try {
+      const response = await axiosInstance.put<{ user: AuthUser }>(`/auth/profile/${userId}`, data)
+      return response.data.user
+    } catch (error) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || 'Erro ao atualizar perfil')
     }
-    
-    if (data.birthDate) {
-      updateData.birthDate = new Date(data.birthDate)
+  }
+
+  // Utilitários para token
+  getToken(): string | null {
+    return localStorage.getItem('token')
+  }
+
+  setToken(token: string): void {
+    localStorage.setItem('token', token)
+  }
+
+  removeToken(): void {
+    localStorage.removeItem('token')
+  }
+
+  // Decodificar payload do JWT (apenas leitura, sem verificação)
+  decodeToken(token: string): TokenPayload | null {
+    try {
+      const base64Url = token.split('.')[1]
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      )
+      return JSON.parse(jsonPayload) as TokenPayload
+    } catch {
+      return null
     }
+  }
 
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        active: true,
-      },
-    })
-
-    return user
+  // Verificar se o token está expirado
+  isTokenExpired(token: string): boolean {
+    const decoded = this.decodeToken(token)
+    if (!decoded || !decoded.exp) return true
+    
+    const currentTime = Date.now() / 1000
+    return decoded.exp < currentTime
   }
 }
 

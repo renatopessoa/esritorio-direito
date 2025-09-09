@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Client } from '../types/client';
+import type { Client } from '../services/clientService';
 
 interface ClientStore {
   clients: Client[];

@@ -3,7 +3,7 @@ import { Typography, Button, Box, CircularProgress } from '@mui/material';
 import { Plus } from 'lucide-react';
 import { ClientList } from '../../components/clients/ClientList';
 import { useNavigate } from 'react-router-dom';
-import { Client } from '../../types/client';
+import { Client } from '../../services/clientService';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '../../services/api';
@@ -13,19 +13,20 @@ export const ClientsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   // Carregar lista de clientes
-  const { 
-    data: clients = [], 
-    isLoading, 
-    error 
+  const {
+    data: clients = [],
+    isLoading,
+    error
   } = useQuery({
     queryKey: ['clients'],
     queryFn: api.clients.getClients
   });
-  
+
   // Handle query errors with useEffect
   React.useEffect(() => {
     if (error) {
-      toast.error(`Erro ao carregar clientes: ${(error as any).message || 'Erro desconhecido'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(`Erro ao carregar clientes: ${errorMessage}`);
     }
   }, [error]);
 
@@ -36,7 +37,7 @@ export const ClientsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast.success('Cliente excluído com sucesso');
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(`Erro ao excluir cliente: ${err.message || 'Erro desconhecido'}`);
     }
   });
@@ -57,8 +58,8 @@ export const ClientsPage: React.FC = () => {
     return (
       <div className="p-4 text-center">
         <Typography color="error">Erro ao carregar clientes. Tente novamente.</Typography>
-        <Button 
-          variant="outlined" 
+        <Button
+          variant="outlined"
           onClick={() => queryClient.invalidateQueries({ queryKey: ['clients'] })}
           sx={{ mt: 2 }}
         >
@@ -83,16 +84,16 @@ export const ClientsPage: React.FC = () => {
           Novo Cliente
         </Button>
       </Box>
-      
+
       {isLoading ? (
         <Box display="flex" justifyContent="center" p={4}>
           <CircularProgress />
         </Box>
       ) : (
-        <ClientList 
-          clients={clients} 
-          onEdit={handleEdit} 
-          onDelete={handleDelete} 
+        <ClientList
+          clients={clients}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
           isDeleting={deleteMutation.isPending}
         />
       )}

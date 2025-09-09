@@ -1,23 +1,20 @@
-import React from 'react';
-import { FileText, Download, Trash2 } from 'lucide-react';
+import { FileText, Trash2 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { FileUpload } from '../upload/FileUpload';
 import { formatFileSize } from '../../utils/file';
 import { formatDate } from '../../utils/date';
-import type { ClientDocument } from '../../types/client';
+import type { ClientDocument } from '../../services/clientService';
 
 interface ClientDocumentsProps {
-  clientId: string;
   documents: ClientDocument[];
   onUpload: (files: File[]) => Promise<void>;
   onDelete: (documentId: string) => Promise<void>;
 }
 
-export function ClientDocuments({ 
-  clientId, 
-  documents, 
-  onUpload, 
-  onDelete 
+export function ClientDocuments({
+  documents,
+  onUpload,
+  onDelete
 }: ClientDocumentsProps) {
   return (
     <Card title="Documentos">
@@ -40,21 +37,13 @@ export function ClientDocuments({
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5 text-blue-400" />
                 <div>
-                  <p className="text-sm font-medium text-white">{doc.name}</p>
+                  <p className="text-sm font-medium text-white">{doc.fileName}</p>
                   <p className="text-xs text-gray-400">
-                    {formatFileSize(doc.size)} • Enviado em {formatDate(doc.created_at)}
+                    {formatFileSize(doc.fileSize)} • Enviado em {formatDate(doc.uploadedAt)}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <a
-                  href={doc.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 hover:bg-white/5 rounded-lg transition-colors"
-                >
-                  <Download className="w-4 h-4 text-gray-400 hover:text-blue-400" />
-                </a>
                 <button
                   onClick={() => onDelete(doc.id)}
                   className="p-2 hover:bg-white/5 rounded-lg transition-colors"

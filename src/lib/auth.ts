@@ -1,6 +1,3 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -35,20 +32,47 @@ export interface AuthUser {
   active: boolean;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+export interface TokenPayload {
+  userId: string;
+  email: string;
+  role: string;
+  exp: number;
+  iat: number;
+}
 
-export const hashPassword = async (password: string): Promise<string> => {
-  return bcrypt.hash(password, 12);
+// Utilitários para JWT no frontend (apenas leitura)
+export const decodeJWT = (token: string): TokenPayload | null => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload) as TokenPayload;
+  } catch {
+    return null;
+  }
 };
 
-export const comparePassword = async (password: string, hashedPassword: string): Promise<boolean> => {
-  return bcrypt.compare(password, hashedPassword);
+export const isTokenExpired = (token: string): boolean => {
+  const decoded = decodeJWT(token);
+  if (!decoded || !decoded.exp) return true;
+  
+  const currentTime = Date.now() / 1000;
+  return decoded.exp < currentTime;
 };
 
-export const generateToken = (userId: string): string => {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
+export const getTokenFromStorage = (): string | null => {
+  return localStorage.getItem('token');
 };
 
-export const verifyToken = (token: string): { userId: string } => {
-  return jwt.verify(token, JWT_SECRET) as { userId: string };
+export const setTokenInStorage = (token: string): void => {
+  localStorage.setItem('token', token);
+};
+
+export const removeTokenFromStorage = (): void => {
+  localStorage.removeItem('token');
 };

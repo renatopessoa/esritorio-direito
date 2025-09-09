@@ -1,7 +1,8 @@
 import React from 'react';
 import { FileUpload } from './FileUpload';
 import { Card } from '../ui/Card';
-import { uploadClientDocument } from '../../services/api/upload';
+// TODO: Implementar uploadClientDocument
+// import { uploadClientDocument } from '../../services/uploadService';
 import { toast } from 'sonner';
 
 interface ClientDocumentUploadProps {
@@ -17,9 +18,9 @@ export function ClientDocumentUpload({ clientId, onUploadComplete }: ClientDocum
     }
 
     try {
-      const uploadPromises = files.map(file => uploadClientDocument(clientId, file));
-      await Promise.all(uploadPromises);
-      toast.success('Documentos enviados com sucesso!');
+      // TODO: Implementar upload de documentos
+      console.log('Files to upload:', files);
+      toast.success('Funcionalidade será implementada em breve');
       onUploadComplete?.();
     } catch (error) {
       console.error('Erro ao fazer upload:', error);

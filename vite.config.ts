@@ -29,7 +29,6 @@ export default defineConfig({
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
           ui: ['@mui/material', '@emotion/react', '@emotion/styled'],
-          supabase: ['@supabase/supabase-js'],
           utils: ['date-fns', 'zod', 'axios'],
         },
       },

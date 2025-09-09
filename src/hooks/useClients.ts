@@ -1,43 +1,45 @@
-import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { clientService } from '../services/api';
-import { User } from '../types/models';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { clientService, type CreateClientData } from '../services/clientService';
 
 export const useClients = () => {
   const queryClient = useQueryClient();
 
-  const clientsQuery = useQuery<User[]>('clients', clientService.getClients);
+  const clientsQuery = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => clientService.getClients()
+  });
 
-  const createClientMutation = useMutation(clientService.createClient, {
+  const createClientMutation = useMutation({
+    mutationFn: clientService.createClient,
     onSuccess: () => {
-      queryClient.invalidateQueries('clients');
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
     },
   });
 
-  const updateClientMutation = useMutation(
-    ({ id, data }: { id: string; data: Partial<User> }) =>
+  const updateClientMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<CreateClientData> }) =>
       clientService.updateClient(id, data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('clients');
-      },
-    }
-  );
-
-  const deleteClientMutation = useMutation(clientService.deleteClient, {
     onSuccess: () => {
-      queryClient.invalidateQueries('clients');
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+
+  const deleteClientMutation = useMutation({
+    mutationFn: clientService.deleteClient,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
     },
   });
 
   return {
-    clients: clientsQuery.data || [],
+    clients: clientsQuery.data?.data || [],
     isLoading: clientsQuery.isLoading,
     error: clientsQuery.error,
     createClient: createClientMutation.mutate,
     updateClient: updateClientMutation.mutate,
     deleteClient: deleteClientMutation.mutate,
-    isCreating: createClientMutation.isLoading,
-    isUpdating: updateClientMutation.isLoading,
-    isDeleting: deleteClientMutation.isLoading,
+    isCreating: createClientMutation.isPending,
+    isUpdating: updateClientMutation.isPending,
+    isDeleting: deleteClientMutation.isPending,
   };
 };

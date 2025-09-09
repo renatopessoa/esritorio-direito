@@ -7,8 +7,8 @@ import { ClientForm } from '../components/clients/ClientForm';
 import { EditClientDialog } from '../components/dialogs/EditClientDialog';
 import { DeleteConfirmDialog } from '../components/dialogs/DeleteConfirmDialog';
 import { useClientStore } from '../stores/useClientStore';
-import { createClient, updateClient, deleteClient, listClients } from '../services/api/clients';
-import type { Client } from '../types/client';
+import { clientService } from '../services/clientService';
+import type { Client } from '../services/clientService';
 import type { ClientFormData } from '../lib/validation/clientSchema';
 import { toast } from 'sonner';
 
@@ -24,8 +24,8 @@ export default function Clients() {
 
   const loadClients = useCallback(async () => {
     try {
-      const data = await listClients();
-      setClients(data);
+      const data = await clientService.getClients();
+      setClients(data.data);
     } catch (error: unknown) {
       console.error('Error loading clients:', error);
       toast.error('Erro ao carregar clientes');
@@ -42,13 +42,13 @@ export default function Clients() {
     try {
       const clientData = {
         name: data.name,
-        document_id: data.documentId,
+        documentId: data.documentId,
         email: data.email,
         phone: data.phone,
         address: data.address,
         notes: data.notes
       };
-      const newClient = await createClient(clientData);
+      const newClient = await clientService.createClient(clientData);
       addClient(newClient);
       setIsFormOpen(false);
       toast.success('Cliente cadastrado com sucesso!');
@@ -69,13 +69,13 @@ export default function Clients() {
     try {
       const clientData = {
         name: data.name,
-        document_id: data.documentId,
+        documentId: data.documentId,
         email: data.email,
         phone: data.phone,
         address: data.address,
         notes: data.notes
       };
-      const updatedClient = await updateClient(selectedClient.id, clientData);
+      const updatedClient = await clientService.updateClient(selectedClient.id, clientData);
       updateClientInStore(selectedClient.id, updatedClient);
       setIsEditDialogOpen(false);
       toast.success('Cliente atualizado com sucesso!');
@@ -89,7 +89,7 @@ export default function Clients() {
     if (!selectedClient) return;
 
     try {
-      await deleteClient(selectedClient.id);
+      await clientService.deleteClient(selectedClient.id);
       removeClient(selectedClient.id);
       setIsDeleteDialogOpen(false);
       toast.success('Cliente excluído com sucesso!');
@@ -101,7 +101,7 @@ export default function Clients() {
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.document_id.includes(searchTerm)
+    client.documentId.includes(searchTerm)
   );
 
   return (

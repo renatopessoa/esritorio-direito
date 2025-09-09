@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { authService } from '../services/api/auth'
+import { authService } from '../services/authService'
 import type { RegisterData, AuthUser } from '../lib/auth'
 
 interface UpdateProfileData {

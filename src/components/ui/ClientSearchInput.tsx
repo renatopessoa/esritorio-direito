@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { useClientStore } from '../../stores/useClientStore';
-import type { Client } from '../../types/client';
+import type { Client } from '../../services/clientService';
 
 interface ClientSearchInputProps {
   value?: string;
@@ -31,7 +31,7 @@ export function ClientSearchInput({ value, onChange, error }: ClientSearchInputP
     if (search.trim()) {
       const filtered = clients.filter(client =>
         client.name.toLowerCase().includes(search.toLowerCase()) ||
-        client.document_id.includes(search)
+        client.documentId.includes(search)
       );
       setFilteredClients(filtered);
     } else {
@@ -78,7 +78,7 @@ export function ClientSearchInput({ value, onChange, error }: ClientSearchInputP
           onFocus={() => setIsOpen(true)}
         />
       </div>
-      
+
       {error && (
         <p className="text-sm text-red-400 mt-1">{error}</p>
       )}
@@ -94,7 +94,7 @@ export function ClientSearchInput({ value, onChange, error }: ClientSearchInputP
             >
               <div className="font-medium">{client.name}</div>
               <div className="text-sm text-gray-400">
-                {client.document_id} • {client.email}
+                {client.documentId} • {client.email}
               </div>
             </button>
           ))}

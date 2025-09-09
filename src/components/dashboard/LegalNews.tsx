@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ExternalLink, Bell } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';

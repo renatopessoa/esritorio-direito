@@ -2,7 +2,7 @@ import React from 'react';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import type { Client } from '../../types/client';
+import type { Client } from '../../services/clientService';
 import { formatDate } from '../../utils/date';
 
 export interface ClientListProps {
@@ -31,14 +31,14 @@ export function ClientList({ clients, onEdit, onDelete, isDeleting = false }: Cl
             {clients.map((client) => (
               <tr key={client.id}>
                 <td className="py-3 px-4">{client.name}</td>
-                <td className="py-3 px-4">{client.document_id}</td>
+                <td className="py-3 px-4">{client.documentId}</td>
                 <td className="py-3 px-4">{client.email}</td>
                 <td className="py-3 px-4">{client.phone}</td>
-                <td className="py-3 px-4">{formatDate(client.created_at)}</td>
+                <td className="py-3 px-4">{formatDate(client.createdAt)}</td>
                 <td className="py-3 px-4">
                   <div className="flex gap-2">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => onEdit(client)}
                       className="hover:text-blue-400"
@@ -46,7 +46,7 @@ export function ClientList({ clients, onEdit, onDelete, isDeleting = false }: Cl
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => onDelete(client)}
                       className="hover:text-red-400"
