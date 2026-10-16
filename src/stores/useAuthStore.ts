@@ -48,7 +48,8 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true })
           
           const { user, token } = await authService.login({ email, password })
-          
+          authService.setToken(token)
+
           set({
             user,
             token,
@@ -66,7 +67,8 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true })
           
           const { user, token } = await authService.register(data)
-          
+          authService.setToken(token)
+
           set({
             user,
             token,
@@ -98,11 +100,13 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const user = await authService.verifyToken(token)
+          authService.setToken(token)
           set({
             user,
             isAuthenticated: true,
           })
         } catch {
+          authService.removeToken()
           set({
             user: null,
             token: null,

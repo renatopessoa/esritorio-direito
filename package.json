@@ -5,9 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "prisma generate && vite build",
     "lint": "eslint . --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:server": "tsx watch --env-file=.env server/index.ts",
+    "start": "prisma migrate deploy && tsx server/index.ts",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.server.json --noEmit",
+    "typecheck:server": "tsc -p tsconfig.server.json --noEmit"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -23,9 +27,13 @@
     "@tanstack/react-query": "^5.24.1",
     "@tanstack/react-table": "^8.13.2",
     "axios": "^1.6.7",
+    "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.3.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -34,11 +42,15 @@
     "recharts": "^2.15.3",
     "sonner": "^1.4.3",
     "tailwind-merge": "^3.3.0",
+    "tsx": "^4.20.3",
     "zod": "^3.22.4",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.15.30",
     "@types/react": "^18.2.56",
     "@types/react-dom": "^18.2.19",
     "@types/recharts": "^1.8.29",
@@ -57,5 +69,8 @@
     "typescript": "^5.2.2",
     "typescript-eslint": "^8.38.0",
     "vite": "^5.1.4"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
