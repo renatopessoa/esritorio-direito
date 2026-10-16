@@ -1,33 +1,56 @@
 import { z } from 'zod';
 
-export const eventSchema = z.object({
-  id: z.string().uuid(),
-  title: z.string().min(3, 'Título é obrigatório'),
-  start: z.string().datetime(),
-  end: z.string().datetime(),
-  description: z.string().optional(),
-  location: z.string().optional(),
-  category: z.enum(['MEETING', 'EVENT', 'TASK', 'HEARING', 'DEADLINE', 'OTHER']),
-  recurrence: z.object({
-    type: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']).optional(),
-    interval: z.number().optional(),
-    until: z.string().datetime().optional(),
-  }).optional(),
-  participants: z.array(z.string()).optional(),
-  reminders: z.array(z.object({
-    type: z.enum(['EMAIL', 'NOTIFICATION']),
-    minutes: z.number(),
-  })).optional(),
-  color: z.string().optional(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
-});
-
-export type CalendarEvent = z.infer<typeof eventSchema>;
-
 export type ViewMode = 'month' | 'week' | 'day';
 
 export type EventCategory = 'MEETING' | 'EVENT' | 'TASK' | 'HEARING' | 'DEADLINE' | 'OTHER';
+
+export interface Reminder {
+  type: 'EMAIL' | 'NOTIFICATION';
+  minutes: number;
+}
+
+/** Evento como devolvido pela API (GET /calendar-events). Datas em ISO. */
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  description: string | null;
+  location: string | null;
+  category: EventCategory;
+  recurrence: { type?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'; interval?: number; until?: string } | null;
+  participants: string[];
+  reminders: Reminder[] | null;
+  color: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const eventFormSchema = z
+  .object({
+    title: z.string().trim().min(3, 'Título é obrigatório'),
+    category: z.enum(['MEETING', 'EVENT', 'TASK', 'HEARING', 'DEADLINE', 'OTHER']),
+    // valores de <input type="datetime-local">
+    start: z.string().min(1, 'Informe o início'),
+    end: z.string().min(1, 'Informe o término'),
+    location: z.string().optional(),
+    description: z.string().optional(),
+  })
+  .refine((d) => new Date(d.end) >= new Date(d.start), {
+    message: 'O término deve ser depois do início',
+    path: ['end'],
+  });
+
+export type EventFormData = z.infer<typeof eventFormSchema>;
+
+export const categoryLabels: Record<EventCategory, string> = {
+  MEETING: 'Reunião',
+  EVENT: 'Evento',
+  TASK: 'Tarefa',
+  HEARING: 'Audiência',
+  DEADLINE: 'Prazo',
+  OTHER: 'Outro',
+};
 
 export const categoryColors: Record<EventCategory, string> = {
   MEETING: 'bg-blue-500',

@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -7,35 +7,57 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { ClientSearchInput } from '../ui/ClientSearchInput';
-import { processSchema, type Process } from '../../types/process';
-import { useUserStore } from '../../stores/useUserStore';
-import { formatCurrency } from '../../utils/currency';
+import { processFormSchema, type Process, type ProcessFormData } from '../../types/process';
+import { userService, type User } from '../../services/userService';
+import { useAuthStore } from '../../stores/useAuthStore';
+import { getErrorMessage } from '../../lib/axios';
 
 interface ProcessFormProps {
-  initialData?: Partial<Process>;
-  onSubmit: (data: Process) => Promise<void>;
+  /** Processo existente para edição; ausente = novo processo. */
+  process?: Process;
+  onSubmit: (data: ProcessFormData) => Promise<void>;
   onCancel: () => void;
 }
 
-export function ProcessForm({ initialData, onSubmit, onCancel }: ProcessFormProps) {
-  const activeUsers = useUserStore((state) => state.getActiveUsers());
-  
+export function ProcessForm({ process, onSubmit, onCancel }: ProcessFormProps) {
+  const currentUserId = useAuthStore((state) => state.user?.id);
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    userService
+      .getUsers()
+      .then((list) => setUsers(list.filter((u) => u.active)))
+      .catch(() => toast.error('Não foi possível carregar a lista de responsáveis'));
+  }, []);
+
   const {
     register,
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<Process>({
-    resolver: zodResolver(processSchema),
-    defaultValues: initialData,
+  } = useForm<ProcessFormData>({
+    resolver: zodResolver(processFormSchema),
+    defaultValues: process
+      ? {
+          number: process.number,
+          clientId: process.clientId,
+          responsibleId: process.responsibleId,
+          type: process.type,
+          subject: process.subject,
+          description: process.description ?? '',
+          court: process.court,
+          value: process.value,
+          status: process.status,
+          priority: process.priority,
+        }
+      : { status: 'ACTIVE', priority: 'MEDIUM', responsibleId: currentUserId ?? '' },
   });
 
-  const handleFormSubmit = async (data: Process) => {
+  const handleFormSubmit = async (data: ProcessFormData) => {
     try {
       await onSubmit(data);
-      toast.success('Processo salvo com sucesso!');
     } catch (error) {
-      toast.error('Erro ao salvar processo');
+      toast.error(getErrorMessage(error, 'Erro ao salvar processo'));
     }
   };
 
@@ -49,14 +71,15 @@ export function ProcessForm({ initialData, onSubmit, onCancel }: ProcessFormProp
             placeholder="0000000-00.0000.0.00.0000"
             {...register('number')}
           />
-          
+
           <Controller
             name="clientId"
             control={control}
             render={({ field }) => (
               <ClientSearchInput
                 value={field.value}
-                onChange={(client) => field.onChange(client?.id)}
+                initialName={process?.client.name}
+                onChange={(client) => field.onChange(client?.id ?? '')}
                 error={errors.clientId?.message}
               />
             )}
@@ -90,7 +113,6 @@ export function ProcessForm({ initialData, onSubmit, onCancel }: ProcessFormProp
               className="input-dark w-full"
               {...register('status')}
             >
-              <option value="">Selecione o status</option>
               <option value="ACTIVE">Ativo</option>
               <option value="ARCHIVED">Arquivado</option>
               <option value="SUSPENDED">Suspenso</option>
@@ -109,7 +131,7 @@ export function ProcessForm({ initialData, onSubmit, onCancel }: ProcessFormProp
             error={errors.subject?.message}
             {...register('subject')}
           />
-          
+
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-300">
               Descrição
@@ -119,9 +141,6 @@ export function ProcessForm({ initialData, onSubmit, onCancel }: ProcessFormProp
               placeholder="Descreva os detalhes do processo..."
               {...register('description')}
             />
-            {errors.description && (
-              <p className="text-sm text-red-400">{errors.description.message}</p>
-            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,7 +155,7 @@ export function ProcessForm({ initialData, onSubmit, onCancel }: ProcessFormProp
               {...register('court.district')}
             />
             <Input
-              label="Valor da Causa"
+              label="Valor da Causa (R$)"
               type="number"
               step="0.01"
               min="0"
@@ -151,7 +170,6 @@ export function ProcessForm({ initialData, onSubmit, onCancel }: ProcessFormProp
                 className="input-dark w-full"
                 {...register('priority')}
               >
-                <option value="">Selecione a prioridade</option>
                 <option value="LOW">Baixa</option>
                 <option value="MEDIUM">Média</option>
                 <option value="HIGH">Alta</option>
@@ -173,17 +191,22 @@ export function ProcessForm({ initialData, onSubmit, onCancel }: ProcessFormProp
                   </div>
                 </div>
               </div>
-              <select
-                className="input-dark w-full"
-                {...register('responsibleId')}
-              >
-                <option value="">Selecione um responsável</option>
-                {activeUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name} ({user.position})
-                  </option>
-                ))}
-              </select>
+              {/* Montado só após carregar as opções, para o valor inicial aparecer selecionado */}
+              {users.length > 0 ? (
+                <select
+                  className="input-dark w-full"
+                  {...register('responsibleId')}
+                >
+                  <option value="">Selecione um responsável</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} ({user.position})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="input-dark w-full py-2 px-3 rounded-md text-gray-400">Carregando...</p>
+              )}
               {errors.responsibleId && (
                 <p className="text-sm text-red-400">{errors.responsibleId.message}</p>
               )}

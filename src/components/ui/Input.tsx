@@ -2,12 +2,14 @@ import React, { forwardRef } from 'react';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  error?: boolean;  // Indica se há erro (booleano)
-  errorMessage?: string;  // Mensagem de erro (string)
+  /** Booleano marca o campo como inválido; string também exibe a mensagem. */
+  error?: boolean | string;
+  errorMessage?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, errorMessage, className, ...props }, ref) => {
+    const message = typeof error === 'string' ? error : errorMessage;
     return (
       <div className="w-full">
         {label && <label className="block mb-1 text-sm font-medium">{label}</label>}
@@ -16,8 +18,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           {...props}
         />
-        {error && errorMessage && (
-          <p className="mt-1 text-xs text-red-500">{errorMessage}</p>
+        {error && message && (
+          <p className="mt-1 text-xs text-red-500">{message}</p>
         )}
       </div>
     );

@@ -1,10 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000,
 });
 
 api.interceptors.request.use((config) => {
@@ -25,5 +26,15 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/** Extrai a mensagem de erro enviada pela API ({ message }) ou usa o fallback. */
+export function getErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    const message = (error.response?.data as { message?: unknown } | undefined)?.message;
+    if (typeof message === 'string' && message) return message;
+    if (!error.response) return 'Erro de conexão com o servidor';
+  }
+  return fallback;
+}
 
 export default api;

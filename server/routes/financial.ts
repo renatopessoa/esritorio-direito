@@ -10,17 +10,20 @@ export const financialRouter = Router();
 // Financeiro do escritório: apenas ADMIN e advogados
 financialRouter.use(requireRole('ADMIN', 'LAWYER'));
 
+// Campos opcionais vindos de formulário: "" significa "sem valor"
+const emptyToNull = (v: unknown) => (v === '' ? null : v);
+
 const recordSchema = z.object({
-  processId: z.string().uuid().nullish(),
-  clientId: z.string().uuid().nullish(),
+  processId: z.preprocess(emptyToNull, z.string().uuid().nullish()),
+  clientId: z.preprocess(emptyToNull, z.string().uuid().nullish()),
   type: z.enum(['INCOME', 'EXPENSE']),
   category: z.enum(['FEE', 'COURT_COST', 'TRAVEL', 'OTHER']),
   description: z.string().min(3),
   amount: z.coerce.number().positive(),
   date: z.coerce.date(),
-  dueDate: z.coerce.date().nullish(),
+  dueDate: z.preprocess(emptyToNull, z.coerce.date().nullish()),
   status: z.enum(['PAID', 'PENDING', 'OVERDUE', 'CANCELED']).default('PENDING'),
-  paymentMethod: z.enum(['CASH', 'CREDIT_CARD', 'BANK_TRANSFER', 'OTHER']).nullish(),
+  paymentMethod: z.preprocess(emptyToNull, z.enum(['CASH', 'CREDIT_CARD', 'BANK_TRANSFER', 'OTHER']).nullish()),
   notes: z.string().optional(),
 });
 

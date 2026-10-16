@@ -1,17 +1,31 @@
 import React from "react";
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface CardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+  /** Quando informado, renderiza um cabeçalho e envolve o conteúdo com padding. */
+  title?: React.ReactNode;
+}
 
-export function Card({ className, ...props }: CardProps) {
+export function Card({ className, title, children, ...props }: CardProps) {
   return (
     <div
-      className={`rounded-lg border bg-white shadow-sm ${className || ""}`}
+      className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className || ""}`}
       {...props}
-    />
+    >
+      {title ? (
+        <>
+          <div className="px-6 pt-5 pb-3 border-b border-white/10">
+            <h3 className="text-lg font-semibold">{title}</h3>
+          </div>
+          <div className="p-6">{children}</div>
+        </>
+      ) : (
+        children
+      )}
+    </div>
   );
 }
 
-interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
+type CardHeaderProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function CardHeader({ className, ...props }: CardHeaderProps) {
   return (
@@ -19,13 +33,13 @@ export function CardHeader({ className, ...props }: CardHeaderProps) {
   );
 }
 
-interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
+type CardTitleProps = React.HTMLAttributes<HTMLHeadingElement>;
 
 export function CardTitle({ className, ...props }: CardTitleProps) {
   return <h3 className={`text-2xl font-semibold ${className || ""}`} {...props} />;
 }
 
-interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {}
+type CardContentProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function CardContent({ className, ...props }: CardContentProps) {
   return <div className={`p-6 pt-0 ${className || ""}`} {...props} />;

@@ -2,7 +2,7 @@ import React from 'react';
 import { clsx } from 'clsx';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'outline';
+  variant?: 'default' | 'outline' | 'ghost' | 'destructive';
   size?: 'default' | 'sm';
 }
 
@@ -18,6 +18,8 @@ export function Button({
   const variants = {
     default: 'bg-green-600 text-white hover:bg-green-700',
     outline: 'border border-gray-300 hover:bg-gray-100',
+    ghost: 'hover:bg-white/10',
+    destructive: 'bg-red-600 text-white hover:bg-red-700',
   };
 
   const sizes = {

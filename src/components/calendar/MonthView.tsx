@@ -1,17 +1,15 @@
-import React from 'react';
 import {
-  startOfMonth,
-  endOfMonth,
   eachDayOfInterval,
+  endOfDay,
   format,
-  isToday,
   isSameMonth,
-  isWithinInterval,
-  parseISO,
+  isToday,
+  startOfDay,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { CalendarEvent } from '../../types/calendar';
 import { categoryColors } from '../../types/calendar';
+import { monthGridRange } from './range';
 
 interface MonthViewProps {
   currentDate: Date;
@@ -26,21 +24,18 @@ export function MonthView({
   onSelectDate,
   onEventClick,
 }: MonthViewProps) {
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  // Semanas completas (domingo a sábado) para o 1º dia cair na coluna certa
+  const days = eachDayOfInterval(monthGridRange(currentDate));
 
+  // Evento aparece em todo dia que ele ocupa, inclusive eventos com horário
   const getEventsForDate = (date: Date) => {
-    return events.filter(event => {
-      const start = parseISO(event.start);
-      const end = parseISO(event.end);
-      return isWithinInterval(date, { start, end });
-    });
+    const dayStart = startOfDay(date);
+    const dayEnd = endOfDay(date);
+    return events.filter((event) => new Date(event.start) <= dayEnd && new Date(event.end) >= dayStart);
   };
 
   return (
     <div className="grid grid-cols-7 gap-px bg-white/10 rounded-lg overflow-hidden">
-      {/* Weekday headers */}
       {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
         <div
           key={day}
@@ -50,7 +45,6 @@ export function MonthView({
         </div>
       ))}
 
-      {/* Calendar days */}
       {days.map((date) => {
         const dayEvents = getEventsForDate(date);
         const isCurrentMonth = isSameMonth(date, currentDate);
@@ -61,7 +55,7 @@ export function MonthView({
             className={`
               min-h-[120px] p-2 bg-card transition-colors cursor-pointer
               hover:bg-white/5
-              ${isToday(date) ? 'ring-2 ring-primary' : ''}
+              ${isToday(date) ? 'ring-2 ring-primary ring-inset' : ''}
               ${!isCurrentMonth ? 'opacity-50' : ''}
             `}
             onClick={() => onSelectDate(date)}
@@ -79,12 +73,13 @@ export function MonthView({
                     ${categoryColors[event.category]} text-white
                     cursor-pointer hover:opacity-80 transition-opacity
                   `}
+                  title={`${format(new Date(event.start), 'HH:mm')} ${event.title}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onEventClick(event);
                   }}
                 >
-                  {event.title}
+                  {format(new Date(event.start), 'HH:mm')} {event.title}
                 </div>
               ))}
 
