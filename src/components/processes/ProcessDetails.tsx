@@ -1,5 +1,6 @@
 import { Card } from '../ui/Card';
 import { ProcessDeadlines } from './ProcessDeadlines';
+import { DocumentsPanel } from '../documents/DocumentsPanel';
 import { priorityLabels, processTypeLabels, type Process } from '../../types/process';
 import { formatDateTime } from '../../utils/date';
 import { formatCurrency } from '../../utils/currency';
@@ -43,6 +44,8 @@ export function ProcessDetails({ process }: ProcessDetailsProps) {
       </Card>
 
       <ProcessDeadlines process={process} />
+
+      <DocumentsPanel kind="process" ownerId={process.id} />
     </div>
   );
 }

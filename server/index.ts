@@ -12,6 +12,8 @@ import { clientsRouter } from './routes/clients';
 import { deadlinesRouter, processesRouter } from './routes/processes';
 import { calendarRouter } from './routes/calendar';
 import { financialRouter } from './routes/financial';
+import { dashboardRouter } from './routes/dashboard';
+import { clientDocumentsRouter, documentsRouter, processDocumentsRouter } from './routes/documents';
 
 const app = express();
 app.disable('x-powered-by');
@@ -30,7 +32,11 @@ api.use('/auth', authRouter);
 // Tudo abaixo exige login
 api.use(requireAuth);
 api.use('/users', usersRouter);
+api.use('/dashboard', dashboardRouter);
+api.use('/documents', documentsRouter);
+api.use('/clients/:id/documents', clientDocumentsRouter);
 api.use('/clients', clientsRouter);
+api.use('/processes/:id/documents', processDocumentsRouter);
 api.use('/processes', processesRouter);
 api.use('/deadlines', deadlinesRouter);
 api.use('/calendar-events', calendarRouter);

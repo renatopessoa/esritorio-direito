@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { Upload, X, FileText, AlertCircle } from 'lucide-react';
+import React, { useId, useState } from 'react';
+import { Upload, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../ui/Button';
 
@@ -23,9 +23,10 @@ export function FileUpload({
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const inputId = useId();
 
   const validateFile = (file: File): string | null => {
-    if (!accept.split(',').some(type => file.name.toLowerCase().endsWith(type))) {
+    if (!accept.split(',').some(type => file.name.toLowerCase().endsWith(type.trim()))) {
       return 'Formato de arquivo não suportado';
     }
     if (file.size > maxSize) {
@@ -61,16 +62,18 @@ export function FileUpload({
     }
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     handleFiles(Array.from(e.dataTransfer.files));
-  }, []);
+  };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       handleFiles(Array.from(e.target.files));
     }
+    // Permite escolher o mesmo arquivo de novo depois de removê-lo
+    e.target.value = '';
   };
 
   const removeFile = (index: number) => {
@@ -84,6 +87,8 @@ export function FileUpload({
     try {
       await onUpload(files);
       setFiles([]);
+    } catch {
+      // Quem chamou já exibe o erro; mantém os arquivos para tentar de novo
     } finally {
       setIsUploading(false);
     }
@@ -126,9 +131,9 @@ export function FileUpload({
             accept={accept}
             onChange={handleFileInput}
             className="hidden"
-            id="file-upload"
+            id={inputId}
           />
-          <label htmlFor="file-upload" className="cursor-pointer text-center">
+          <label htmlFor={inputId} className="cursor-pointer text-center">
             <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
             <p className="text-sm text-gray-300">
               {helpText}
@@ -155,6 +160,8 @@ export function FileUpload({
                 </div>
               </div>
               <button
+                type="button"
+                aria-label={`Remover ${file.name}`}
                 onClick={() => removeFile(index)}
                 className="p-1 hover:bg-white/5 rounded-full transition-colors"
               >
@@ -165,6 +172,7 @@ export function FileUpload({
 
           <div className="flex justify-end pt-2">
             <Button
+              type="button"
               onClick={handleUpload}
               disabled={isUploading}
             >

@@ -9,26 +9,26 @@ datasource db {
 
 // Tabela de usuários
 model User {
-  id          String   @id @default(uuid())
-  name        String
-  email       String   @unique
-  password    String
-  role        UserRole @default(ASSISTANT)
-  cpf         String   @unique
-  birthDate   DateTime @map("birth_date")
-  phone       String
-  landline    String?
-  address     Json?
-  position    String
-  avatarUrl   String?  @map("avatar_url")
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(ASSISTANT)
+  cpf       String   @unique
+  birthDate DateTime @map("birth_date")
+  phone     String
+  landline  String?
+  address   Json?
+  position  String
+  avatarUrl String?  @map("avatar_url")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relacionamentos
-  responsibleProcesses Process[] @relation("ResponsibleUser")
-  calendarEvents      CalendarEvent[]
-  financialRecords    FinancialRecord[]
+  responsibleProcesses Process[]         @relation("ResponsibleUser")
+  calendarEvents       CalendarEvent[]
+  financialRecords     FinancialRecord[]
 
   @@map("users")
 }
@@ -64,7 +64,8 @@ model ClientDocument {
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relacionamentos
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client  Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  content DocumentContent?
 
   @@map("client_documents")
 }
@@ -121,12 +122,28 @@ model ProcessDocument {
   type       String
   url        String
   version    Int      @default(1)
+  size       Int      @default(0)
   uploadedAt DateTime @default(now()) @map("uploaded_at")
 
   // Relacionamentos
-  process Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+  process Process          @relation(fields: [processId], references: [id], onDelete: Cascade)
+  content DocumentContent?
 
   @@map("process_documents")
+}
+
+// Bytes dos arquivos, em tabela separada para que listar documentos
+// nunca carregue o conteúdo. Some junto com o documento (cascade).
+model DocumentContent {
+  id                String  @id @default(uuid())
+  data              Bytes
+  clientDocumentId  String? @unique @map("client_document_id")
+  processDocumentId String? @unique @map("process_document_id")
+
+  clientDocument  ClientDocument?  @relation(fields: [clientDocumentId], references: [id], onDelete: Cascade)
+  processDocument ProcessDocument? @relation(fields: [processDocumentId], references: [id], onDelete: Cascade)
+
+  @@map("document_contents")
 }
 
 // Tabela de eventos do calendário
@@ -154,22 +171,22 @@ model CalendarEvent {
 
 // Tabela de registros financeiros
 model FinancialRecord {
-  id            String              @id @default(uuid())
-  processId     String?             @map("process_id")
-  clientId      String?             @map("client_id")
-  userId        String              @map("user_id")
+  id            String            @id @default(uuid())
+  processId     String?           @map("process_id")
+  clientId      String?           @map("client_id")
+  userId        String            @map("user_id")
   type          FinancialType
   category      FinancialCategory
   description   String
-  amount        Decimal             @db.Decimal(15, 2)
+  amount        Decimal           @db.Decimal(15, 2)
   date          DateTime
-  dueDate       DateTime?           @map("due_date")
-  status        FinancialStatus     @default(PENDING)
+  dueDate       DateTime?         @map("due_date")
+  status        FinancialStatus   @default(PENDING)
   paymentMethod PaymentMethod?
   attachments   Json?
   notes         String?
-  createdAt     DateTime            @default(now()) @map("created_at")
-  updatedAt     DateTime            @updatedAt @map("updated_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
 
   // Relacionamentos
   process Process? @relation(fields: [processId], references: [id])

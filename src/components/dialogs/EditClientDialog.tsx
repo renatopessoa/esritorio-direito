@@ -2,6 +2,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { ClientForm } from '../clients/ClientForm';
+import { DocumentsPanel } from '../documents/DocumentsPanel';
 import type { Client } from '../../services/clientService';
 import type { ClientFormData } from '../../lib/validation/clientSchema';
 
@@ -44,6 +45,10 @@ export function EditClientDialog({
             onSubmit={onSubmit}
             onCancel={() => onOpenChange(false)}
           />
+
+          <div className="mt-6">
+            <DocumentsPanel kind="client" ownerId={client.id} />
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
