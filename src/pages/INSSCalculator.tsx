@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { Info, Calculator, History, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const INSS_TABLE_2025 = [
-    { min: 0, max: 1518.00, aliquot: 0.075, deduction: 0 },
-    { min: 1518.01, max: 2793.88, aliquot: 0.09, deduction: 22.77 },
-    { min: 2793.89, max: 4190.83, aliquot: 0.12, deduction: 106.59 },
-    { min: 4190.84, max: 8157.41, aliquot: 0.14, deduction: 190.40 },
-];
+import {
+    ANOS_DISPONIVEIS,
+    anoVigente,
+    calcularINSS,
+    faixasINSS,
+    parseValorBR,
+    tetoINSS,
+    type ResultadoINSS,
+} from '../utils/previdencia';
 
 interface CalculationResult {
     salary: number;
+    year?: number;
     faixa: string;
     aliquot: number;
     deduction: number;
@@ -19,19 +22,6 @@ interface CalculationResult {
     date: Date;
 }
 
-function calculateINSS(salary: number): { faixa: string, aliquot: number, deduction: number, inss: number } | null {
-    const faixa = INSS_TABLE_2025.find(f => salary >= f.min && salary <= f.max);
-    if (!faixa) return null;
-    const inss = salary * faixa.aliquot - faixa.deduction;
-    return {
-        faixa: `R$ ${faixa.min.toFixed(2)} até R$ ${faixa.max.toFixed(2)}`,
-        aliquot: faixa.aliquot * 100,
-        deduction: faixa.deduction,
-        inss: inss < 0 ? 0 : inss,
-    };
-}
-
-// Formatação de valores monetários
 const formatCurrency = (value: number): string => {
     return value.toLocaleString('pt-BR', {
         style: 'currency',
@@ -39,112 +29,109 @@ const formatCurrency = (value: number): string => {
     });
 };
 
+const formatPercent = (value: number) => `${(value * 100).toLocaleString('pt-BR')}%`;
+
 export default function INSSCalculator() {
     const [salary, setSalary] = useState('');
-    const [result, setResult] = useState<ReturnType<typeof calculateINSS> | null>(null);
+    const [year, setYear] = useState(anoVigente);
+    const [result, setResult] = useState<ResultadoINSS | null>(null);
+    const [error, setError] = useState('');
     const [history, setHistory] = useState<CalculationResult[]>([]);
     const [showTable, setShowTable] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
-    const [formattedSalary, setFormattedSalary] = useState('');
 
     // Carregar histórico do localStorage
     useEffect(() => {
-        const savedHistory = localStorage.getItem('inssCalculationHistory');
-        if (savedHistory) {
-            try {
-                const parsed = JSON.parse(savedHistory);
-                setHistory(parsed.map((item: any) => ({
-                    ...item,
-                    date: new Date(item.date)
-                })));
-            } catch (e) {
-                console.error('Erro ao carregar histórico:', e);
-            }
+        try {
+            const savedHistory = localStorage.getItem('inssCalculationHistory');
+            if (!savedHistory) return;
+            const parsed = JSON.parse(savedHistory);
+            setHistory(parsed.map((item: Omit<CalculationResult, 'date'> & { date: string }) => ({
+                ...item,
+                date: new Date(item.date)
+            })));
+        } catch (e) {
+            console.error('Erro ao carregar histórico:', e);
         }
     }, []);
 
-    // Formatar entrada de salário
     const handleSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-
-        // Permite digitar o valor completo antes de formatar
-        if (value === '') {
-            setSalary('');
-            setFormattedSalary('');
-            return;
-        }
-
-        // Mantém apenas números, vírgulas e pontos
-        const cleaned = value.replace(/[^\d,.]/g, '');
-
-        // Não formata enquanto o usuário está digitando
-        setSalary(cleaned);
-
-        // Não mostra a formatação no campo enquanto o usuário digita
-        setFormattedSalary(cleaned);
+        // Mantém apenas números, vírgulas e pontos; a conversão acontece ao calcular
+        setSalary(e.target.value.replace(/[^\d,.]/g, ''));
+        setError('');
     };
 
     const handleCalculate = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Remove os símbolos não numéricos, preservando apenas um separador decimal
-        const normalizedValue = salary.replace(/[^\d]/g, '');
-        const value = parseFloat(normalizedValue) / 100; // Considera os dois últimos dígitos como centavos
-
+        const value = parseValorBR(salary);
         if (isNaN(value) || value <= 0) {
             setResult(null);
+            setError('Informe um salário válido, por exemplo 3000 ou 3.000,00');
             return;
         }
 
-        // Formata o valor apenas após o cálculo
-        setFormattedSalary(formatCurrency(value));
+        setSalary(value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
-        const calculationResult = calculateINSS(value);
+        const calculationResult = calcularINSS(value, year);
         setResult(calculationResult);
 
-        if (calculationResult) {
-            const newResult: CalculationResult = {
-                ...calculationResult,
-                salary: value,
-                date: new Date()
-            };
+        const newResult: CalculationResult = {
+            salary: value,
+            year,
+            faixa: `${formatCurrency(calculationResult.faixa.min)} até ${formatCurrency(calculationResult.faixa.max)}`,
+            aliquot: calculationResult.faixa.aliquota * 100,
+            deduction: calculationResult.faixa.deducao,
+            inss: calculationResult.inss,
+            date: new Date()
+        };
 
-            const updatedHistory = [newResult, ...history.slice(0, 9)];
-            setHistory(updatedHistory);
+        const updatedHistory = [newResult, ...history.slice(0, 9)];
+        setHistory(updatedHistory);
+        try {
             localStorage.setItem('inssCalculationHistory', JSON.stringify(updatedHistory));
+        } catch {
+            // histórico é só conveniência
         }
     };
 
     const downloadCSV = () => {
         if (history.length === 0) return;
 
-        const headers = ['Data', 'Salário', 'Faixa', 'Alíquota', 'Dedução', 'INSS'];
+        const headers = ['Data', 'Ano da tabela', 'Salário', 'Faixa', 'Alíquota', 'Dedução', 'INSS'];
         const rows = history.map(item => [
             item.date.toLocaleDateString('pt-BR'),
+            String(item.year ?? ''),
             formatCurrency(item.salary),
             item.faixa,
-            `${item.aliquot}%`,
+            `${item.aliquot.toLocaleString('pt-BR')}%`,
             formatCurrency(item.deduction),
             formatCurrency(item.inss)
         ]);
 
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.join(','))
-        ].join('\n');
+        // Ponto e vírgula: os valores em reais usam vírgula decimal
+        const csvCell = (cell: string) => `"${cell.replace(/"/g, '""')}"`;
+        const csvContent = [headers, ...rows].map(row => row.map(csvCell).join(';')).join('\n');
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
         link.setAttribute('download', `calculo_inss_${new Date().toISOString().split('T')[0]}.csv`);
         link.click();
+        URL.revokeObjectURL(url);
     };
 
     const clearHistory = () => {
         setHistory([]);
-        localStorage.removeItem('inssCalculationHistory');
+        try {
+            localStorage.removeItem('inssCalculationHistory');
+        } catch {
+            // ignora
+        }
     };
+
+    const exemplo = calcularINSS(3000, year);
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -153,7 +140,7 @@ export default function INSSCalculator() {
                     <div className="bg-blue-600 text-black p-6">
                         <h1 className="text-3xl font-bold flex items-center">
                             <Calculator className="mr-3" />
-                            Cálculo do INSS 2025
+                            Cálculo do INSS {year}
                         </h1>
                         <p className="mt-2 opacity-90">
                             Simule o valor da sua contribuição de acordo com as novas alíquotas e faixas salariais
@@ -165,11 +152,25 @@ export default function INSSCalculator() {
                             <div className="md:col-span-2">
                                 <form onSubmit={handleCalculate} className="space-y-4 bg-gray-50 p-5 rounded-lg">
                                     <div>
+                                        <label htmlFor="inss-year" className="block mb-2 font-medium text-lg text-black">Ano da tabela:</label>
+                                        <select
+                                            id="inss-year"
+                                            value={year}
+                                            onChange={(e) => { setYear(Number(e.target.value)); setResult(null); }}
+                                            className="border rounded-lg px-4 py-3 w-full text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                        >
+                                            {ANOS_DISPONIVEIS.map((ano) => (
+                                                <option key={ano} value={ano}>{ano}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
                                         <label className="block mb-2 font-medium text-lg text-black">Informe seu salário bruto:</label>
                                         <div className="relative">
                                             <input
                                                 type="text"
-                                                value={formattedSalary}
+                                                value={salary}
                                                 onChange={handleSalaryChange}
                                                 className="border rounded-lg px-4 py-3 w-full text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                                                 placeholder="Digite o valor sem R$ (ex: 3000,00)"
@@ -178,8 +179,9 @@ export default function INSSCalculator() {
                                         </div>
                                         <div className="text-sm text-gray-700 mt-1 flex items-center">
                                             <Info className="w-4 h-4 mr-1" />
-                                            Digite o valor completo, como 3000 ou 3000,00
+                                            Digite o valor completo, como 3000, 3000,50 ou 3.000,50
                                         </div>
+                                        {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
                                     </div>
 
                                     <div className="flex space-x-3">
@@ -213,7 +215,7 @@ export default function INSSCalculator() {
 
                                 {showTable && (
                                     <div className="mt-6 bg-white p-5 rounded-lg border border-gray-200">
-                                        <h2 className="text-xl font-semibold mb-3 text-black">Tabela INSS 2025</h2>
+                                        <h2 className="text-xl font-semibold mb-3 text-black">Tabela INSS {year}</h2>
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full border-collapse">
                                                 <thead>
@@ -224,16 +226,16 @@ export default function INSSCalculator() {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {INSS_TABLE_2025.map((faixa, index) => (
+                                                    {faixasINSS(year).map((faixa, index) => (
                                                         <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                                             <td className="border border-gray-200 px-4 py-2 text-black">
                                                                 {formatCurrency(faixa.min)} até {formatCurrency(faixa.max)}
                                                             </td>
                                                             <td className="border border-gray-200 px-4 py-2 text-black font-medium">
-                                                                {faixa.aliquot * 100}%
+                                                                {formatPercent(faixa.aliquota)}
                                                             </td>
                                                             <td className="border border-gray-200 px-4 py-2 text-black">
-                                                                {formatCurrency(faixa.deduction)}
+                                                                {formatCurrency(faixa.deducao)}
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -269,6 +271,7 @@ export default function INSSCalculator() {
                                                 <thead>
                                                     <tr className="bg-gray-100">
                                                         <th className="border border-gray-200 text-black px-3 py-2 text-left">Data</th>
+                                                        <th className="border border-gray-200 text-black px-3 py-2 text-left">Tabela</th>
                                                         <th className="border border-gray-200 text-black px-3 py-2 text-left">Salário</th>
                                                         <th className="border border-gray-200 text-black px-3 py-2 text-left">INSS</th>
                                                     </tr>
@@ -279,7 +282,10 @@ export default function INSSCalculator() {
                                                             <td className="border border-gray-200 text-black px-3 py-2">
                                                                 {item.date.toLocaleDateString('pt-BR')}
                                                             </td>
-                                                            <td className="border border-gray-200  text-black px-3 py-2">
+                                                            <td className="border border-gray-200 text-black px-3 py-2">
+                                                                {item.year ?? '—'}
+                                                            </td>
+                                                            <td className="border border-gray-200 text-black px-3 py-2">
                                                                 {formatCurrency(item.salary)}
                                                             </td>
                                                             <td className="border border-gray-200 px-3 py-2 font-medium text-blue-600">
@@ -302,34 +308,45 @@ export default function INSSCalculator() {
                                         <div className="space-y-3">
                                             <div className="bg-white p-3 rounded border border-gray-200">
                                                 <div className="text-sm text-gray-700 font-medium">Salário bruto</div>
-                                                <div className="text-lg font-semibold text-black">{formatCurrency(parseFloat(salary))}</div>
+                                                <div className="text-lg font-semibold text-black">{formatCurrency(result.salario)}</div>
                                             </div>
+
+                                            {result.acimaDoTeto && (
+                                                <div className="bg-yellow-50 p-3 rounded border border-yellow-200 text-sm text-yellow-800">
+                                                    Salário acima do teto: a contribuição é calculada sobre {formatCurrency(tetoINSS(year))} (valor máximo).
+                                                </div>
+                                            )}
 
                                             <div className="bg-white p-3 rounded border border-gray-200">
                                                 <div className="text-sm text-gray-700 font-medium">Faixa salarial</div>
-                                                <div className="text-md text-black">{result.faixa}</div>
+                                                <div className="text-md text-black">
+                                                    {formatCurrency(result.faixa.min)} até {formatCurrency(result.faixa.max)}
+                                                </div>
                                             </div>
 
                                             <div className="bg-white p-3 rounded border border-gray-200">
                                                 <div className="text-sm text-gray-700 font-medium">Alíquota aplicada</div>
-                                                <div className="text-md font-medium text-black">{result.aliquot}%</div>
+                                                <div className="text-md font-medium text-black">{formatPercent(result.faixa.aliquota)}</div>
                                             </div>
 
                                             <div className="bg-white p-3 rounded border border-gray-200">
                                                 <div className="text-sm text-gray-700 font-medium">Parcela a deduzir</div>
-                                                <div className="text-md text-black">{formatCurrency(result.deduction)}</div>
+                                                <div className="text-md text-black">{formatCurrency(result.faixa.deducao)}</div>
                                             </div>
 
                                             <div className="bg-blue-100 p-4 rounded border border-blue-200">
                                                 <div className="text-sm text-blue-800 font-medium">Contribuição INSS</div>
                                                 <div className="text-2xl font-bold text-blue-800">{formatCurrency(result.inss)}</div>
+                                                <div className="text-xs text-blue-700 mt-1">
+                                                    Alíquota efetiva: {result.aliquotaEfetiva.toLocaleString('pt-BR')}%
+                                                </div>
                                             </div>
                                         </div>
 
                                         <div className="mt-4 text-sm text-black bg-white p-3 rounded">
                                             <p className="flex items-start">
                                                 <Info className="w-4 h-4 mr-1 mt-0.5 text-blue-500" />
-                                                Cálculo: {formatCurrency(parseFloat(salary))} × {result.aliquot}% - {formatCurrency(result.deduction)} = {formatCurrency(result.inss)}
+                                                Cálculo: {formatCurrency(result.baseCalculo)} × {formatPercent(result.faixa.aliquota)} - {formatCurrency(result.faixa.deducao)} = {formatCurrency(result.inss)}
                                             </p>
                                         </div>
                                     </div>
@@ -352,13 +369,15 @@ export default function INSSCalculator() {
                         O valor final é calculado aplicando-se a alíquota correspondente ao seu salário e subtraindo a parcela a deduzir.
                     </p>
                     <p className="text-gray-600">
-                        Exemplo: Para um salário de R$ 3.000,00, aplica-se a alíquota de 12% e subtrai-se a dedução de R$ 106,59, resultando em uma contribuição de R$ 253,41.
+                        Exemplo ({year}): para um salário de R$ 3.000,00, aplica-se a alíquota de {formatPercent(exemplo.faixa.aliquota)} e
+                        subtrai-se a dedução de {formatCurrency(exemplo.faixa.deducao)}, resultando em uma contribuição de {formatCurrency(exemplo.inss)}.
+                        Salários acima do teto ({formatCurrency(tetoINSS(year))}) contribuem sobre o teto.
                     </p>
                     <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                         <p className="text-black flex items-center">
                             <Calculator className="w-5 h-5 mr-2 text-green-600" />
                             <span>Quer calcular sua aposentadoria por idade? </span>
-                            <Link to="/aposentadoria" className="ml-2 text-green-600 hover:text-green-800 font-medium">
+                            <Link to="/app/AposentadoriaCalculator" className="ml-2 text-green-600 hover:text-green-800 font-medium">
                                 Acesse nosso simulador de aposentadoria →
                             </Link>
                         </p>

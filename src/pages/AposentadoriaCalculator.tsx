@@ -2,6 +2,17 @@ import React, { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { Info, Calculator, ArrowLeft, BookUser, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+    anoVigente,
+    coeficienteBeneficio,
+    formatarAnos,
+    idadeMinimaProgressiva,
+    limitarBeneficio,
+    parseValorBR,
+    pontosMinimos,
+    round2,
+    tetoINSS,
+} from '../utils/previdencia';
 
 type TipoCalculo =
     | 'idadeUrbana'
@@ -36,18 +47,21 @@ const REGRAS_APOSENTADORIA = {
     pedagio100: "Tempo de Contribuição - Pedágio 100%",
 };
 
-// Ano base para regras progressivas (2025 conforme material)
-const ANO_ATUAL_REGRAS = 2025;
+// Os requisitos progressivos da EC 103/2019 mudam todo 1º de janeiro
+const ANO_ATUAL_REGRAS = new Date().getFullYear();
+// Piso e teto do benefício vêm da tabela INSS mais recente cadastrada
+const ANO_TABELA_INSS = anoVigente();
 
 export default function AposentadoriaCalculator() {
     const [tipoCalculo, setTipoCalculo] = useState<TipoCalculo>('idadeUrbana');
     const [genero, setGenero] = useState<'masculino' | 'feminino'>('masculino');
     const [idade, setIdade] = useState('');
+    const [idadeMeses, setIdadeMeses] = useState('');
+    // Homens filiados antes da reforma precisam de 15 anos na aposentadoria por idade (art. 18 da EC 103/2019)
+    const [filiadoAntesReforma, setFiliadoAntesReforma] = useState(true);
     const [tempoContribuicaoAnos, setTempoContribuicaoAnos] = useState('');
     const [tempoContribuicaoMeses, setTempoContribuicaoMeses] = useState(''); // Para pedágio
-    // const [mediaSalarial, setMediaSalarial] = useState(''); // Substituído
-    const [salarioBrutoOuMedia, setSalarioBrutoOuMedia] = useState(''); // valor numérico em string
-    const [formattedSalarioBrutoOuMedia, setFormattedSalarioBrutoOuMedia] = useState(''); // valor formatado
+    const [salarioBrutoOuMedia, setSalarioBrutoOuMedia] = useState('');
     const [tempoFaltantePedagioAnos, setTempoFaltantePedagioAnos] = useState('');
     const [tempoFaltantePedagioMeses, setTempoFaltantePedagioMeses] = useState('');
     // Adicionar estado para histórico de cálculos
@@ -73,10 +87,9 @@ export default function AposentadoriaCalculator() {
         e.preventDefault();
         setResult(null);
 
-        const idadeNum = parseInt(idade, 10);
+        const idadeNum = parseInt(idade, 10) + (parseInt(idadeMeses, 10) || 0) / 12;
         const tempoContTotalAnos = parseTempoContribuicaoTotalAnos();
-        // Corrige: pega o valor numérico corretamente
-        const salarioBrutoOuMediaNum = Number(salarioBrutoOuMedia);
+        const salarioBrutoOuMediaNum = parseValorBR(salarioBrutoOuMedia);
         const tempoFaltantePedagioTotalAnos = parseTempoFaltantePedagioTotalAnos();
 
         let calculatedResult: AposentadoriaResult = {
@@ -103,62 +116,61 @@ export default function AposentadoriaCalculator() {
                     return;
                 }
                 const idadeMinimaIdade = genero === 'feminino' ? 62 : 65;
-                const tempoContMinimoIdade = genero === 'feminino' ? 15 : 20;
+                const tempoContMinimoIdade = genero === 'feminino' || filiadoAntesReforma ? 15 : 20;
                 const atendeIdade = idadeNum >= idadeMinimaIdade;
                 const atendeContribuicaoIdade = tempoContTotalAnos >= tempoContMinimoIdade;
                 calculatedResult.elegivel = atendeIdade && atendeContribuicaoIdade;
 
                 if (calculatedResult.elegivel) {
-                    const percentualBase = 60;
-                    const anosExcedentes = Math.max(0, tempoContTotalAnos - (genero === 'feminino' ? 15 : 20));
-                    const percentualAdicional = Math.min(anosExcedentes * 2, 40);
-                    const percentualTotal = percentualBase + percentualAdicional;
-                    calculatedResult.valorEstimado = (salarioBrutoOuMediaNum * percentualTotal) / 100;
+                    // A média dos salários de contribuição não ultrapassa o teto
+                    const media = Math.min(salarioBrutoOuMediaNum, tetoINSS(ANO_TABELA_INSS));
+                    const percentualTotal = coeficienteBeneficio(tempoContTotalAnos, genero);
+                    calculatedResult.valorEstimado = limitarBeneficio((media * percentualTotal) / 100, ANO_TABELA_INSS);
                     calculatedResult.percentualTotal = percentualTotal;
                     calculatedResult.mensagemPrincipal = "Você é elegível para Aposentadoria por Idade!";
                 } else {
                     calculatedResult.mensagemPrincipal = "Você não atende aos requisitos para Aposentadoria por Idade.";
                 }
                 calculatedResult.detalhes = {
-                    idadeAtual: idadeNum, idadeMinimaExigida: idadeMinimaIdade, atendeIdade,
-                    tempoContribuicaoAtual: tempoContTotalAnos.toFixed(2), tempoContribuicaoMinimoExigido: tempoContMinimoIdade, atendeContribuicao: atendeContribuicaoIdade,
+                    idadeAtual: formatarAnos(idadeNum), idadeMinimaExigida: idadeMinimaIdade, atendeIdade,
+                    tempoContribuicaoAtual: formatarAnos(tempoContTotalAnos), tempoContribuicaoMinimoExigido: tempoContMinimoIdade, atendeContribuicao: atendeContribuicaoIdade,
                     mediaSalarial: formatCurrency(salarioBrutoOuMediaNum),
                 };
                 break;
 
             case 'pontosComum':
                 const tcMinPontosComum = genero === 'feminino' ? 30 : 35;
-                const pontosMinComum = genero === 'feminino' ? 92 : 102; // Para 2025
+                const pontosMinComum = pontosMinimos(ANO_ATUAL_REGRAS, genero);
                 const pontosAtuaisComum = idadeNum + tempoContTotalAnos;
                 const atendeTcPontosComum = tempoContTotalAnos >= tcMinPontosComum;
                 const atendePontosComum = pontosAtuaisComum >= pontosMinComum;
                 calculatedResult.elegivel = atendeTcPontosComum && atendePontosComum;
                 calculatedResult.mensagemPrincipal = calculatedResult.elegivel ? "Elegível pela Regra de Pontos." : "Não elegível pela Regra de Pontos.";
                 calculatedResult.detalhes = {
-                    idadeAtual: idadeNum,
-                    tempoContribuicaoAtual: tempoContTotalAnos.toFixed(2), tcMinExigido: tcMinPontosComum, atendeTcPontosComum,
-                    pontosAtuais: pontosAtuaisComum.toFixed(2), pontosMinExigidos: pontosMinComum, atendePontosComum,
+                    idadeAtual: formatarAnos(idadeNum),
+                    tempoContribuicaoAtual: formatarAnos(tempoContTotalAnos), tcMinExigido: tcMinPontosComum, atendeTcPontosComum,
+                    pontosAtuais: round2(pontosAtuaisComum), pontosMinExigidos: pontosMinComum, atendePontosComum,
                     anoReferencia: ANO_ATUAL_REGRAS,
                 };
                 break;
 
             case 'idadeMinimaProgressivaComum':
                 const tcMinIdadeProgComum = genero === 'feminino' ? 30 : 35;
-                const idadeMinIdadeProgComum = genero === 'feminino' ? 59 : 64; // Para 2025
+                const idadeMinIdadeProgComum = idadeMinimaProgressiva(ANO_ATUAL_REGRAS, genero);
                 const atendeTcIdadeProgComum = tempoContTotalAnos >= tcMinIdadeProgComum;
                 const atendeIdadeIdadeProgComum = idadeNum >= idadeMinIdadeProgComum;
                 calculatedResult.elegivel = atendeTcIdadeProgComum && atendeIdadeIdadeProgComum;
                 calculatedResult.mensagemPrincipal = calculatedResult.elegivel ? "Elegível pela Regra de Idade Mínima Progressiva." : "Não elegível pela Regra de Idade Mínima Progressiva.";
                 calculatedResult.detalhes = {
-                    idadeAtual: idadeNum, idadeMinExigida: idadeMinIdadeProgComum, atendeIdadeIdadeProgComum,
-                    tempoContribuicaoAtual: tempoContTotalAnos.toFixed(2), tcMinExigido: tcMinIdadeProgComum, atendeTcIdadeProgComum,
+                    idadeAtual: formatarAnos(idadeNum), idadeMinExigida: formatarAnos(idadeMinIdadeProgComum), atendeIdadeIdadeProgComum,
+                    tempoContribuicaoAtual: formatarAnos(tempoContTotalAnos), tcMinExigido: tcMinIdadeProgComum, atendeTcIdadeProgComum,
                     anoReferencia: ANO_ATUAL_REGRAS,
                 };
                 break;
 
             case 'pontosProfessor':
                 const tcMinPontosProf = genero === 'feminino' ? 25 : 30;
-                const pontosMinProf = genero === 'feminino' ? 87 : 97; // Para 2025
+                const pontosMinProf = pontosMinimos(ANO_ATUAL_REGRAS, genero, true);
                 const pontosAtuaisProf = idadeNum + tempoContTotalAnos;
                 const atendeTcPontosProf = tempoContTotalAnos >= tcMinPontosProf;
                 const atendePontosProf = pontosAtuaisProf >= pontosMinProf;
@@ -166,24 +178,24 @@ export default function AposentadoriaCalculator() {
                 calculatedResult.mensagemPrincipal = calculatedResult.elegivel ? "Elegível pela Regra de Pontos (Professor)." : "Não elegível pela Regra de Pontos (Professor).";
                 calculatedResult.detalhes = {
                     cargo: "Professor(a)",
-                    idadeAtual: idadeNum,
-                    tempoContribuicaoMagisterio: tempoContTotalAnos.toFixed(2), tcMinExigido: tcMinPontosProf, atendeTcPontosProf,
-                    pontosAtuais: pontosAtuaisProf.toFixed(2), pontosMinExigidos: pontosMinProf, atendePontosProf,
+                    idadeAtual: formatarAnos(idadeNum),
+                    tempoContribuicaoMagisterio: formatarAnos(tempoContTotalAnos), tcMinExigido: tcMinPontosProf, atendeTcPontosProf,
+                    pontosAtuais: round2(pontosAtuaisProf), pontosMinExigidos: pontosMinProf, atendePontosProf,
                     anoReferencia: ANO_ATUAL_REGRAS,
                 };
                 break;
 
             case 'idadeMinimaProgressivaProfessor':
                 const tcMinIdadeProgProf = genero === 'feminino' ? 25 : 30;
-                const idadeMinIdadeProgProf = genero === 'feminino' ? 54 : 59; // Para 2025
+                const idadeMinIdadeProgProf = idadeMinimaProgressiva(ANO_ATUAL_REGRAS, genero, true);
                 const atendeTcIdadeProgProf = tempoContTotalAnos >= tcMinIdadeProgProf;
                 const atendeIdadeIdadeProgProf = idadeNum >= idadeMinIdadeProgProf;
                 calculatedResult.elegivel = atendeTcIdadeProgProf && atendeIdadeIdadeProgProf;
                 calculatedResult.mensagemPrincipal = calculatedResult.elegivel ? "Elegível pela Regra de Idade Mínima Progressiva (Professor)." : "Não elegível pela Regra de Idade Mínima Progressiva (Professor).";
                 calculatedResult.detalhes = {
                     cargo: "Professor(a)",
-                    idadeAtual: idadeNum, idadeMinExigida: idadeMinIdadeProgProf, atendeIdadeIdadeProgProf,
-                    tempoContribuicaoMagisterio: tempoContTotalAnos.toFixed(2), tcMinExigido: tcMinIdadeProgProf, atendeTcIdadeProgProf,
+                    idadeAtual: formatarAnos(idadeNum), idadeMinExigida: formatarAnos(idadeMinIdadeProgProf), atendeIdadeIdadeProgProf,
+                    tempoContribuicaoMagisterio: formatarAnos(tempoContTotalAnos), tcMinExigido: tcMinIdadeProgProf, atendeTcIdadeProgProf,
                     anoReferencia: ANO_ATUAL_REGRAS,
                 };
                 break;
@@ -196,15 +208,23 @@ export default function AposentadoriaCalculator() {
                 const tcMinPedagio50 = genero === 'feminino' ? 30 : 35;
                 const pedagio50 = tempoFaltantePedagioTotalAnos * 0.5;
                 const tcNecessarioPedagio50 = tcMinPedagio50 + pedagio50;
-                calculatedResult.elegivel = tempoContTotalAnos >= tcNecessarioPedagio50;
-                calculatedResult.mensagemPrincipal = calculatedResult.elegivel ? "Elegível pela Regra de Pedágio 50%." : "Não elegível pela Regra de Pedágio 50%.";
+                // Art. 17: só vale para quem estava a no máximo 2 anos do tempo mínimo em 13/11/2019
+                const dentroDoLimitePedagio50 = tempoFaltantePedagioTotalAnos <= 2;
+                const atendeTcPedagio50 = tempoContTotalAnos >= tcNecessarioPedagio50;
+                calculatedResult.elegivel = dentroDoLimitePedagio50 && atendeTcPedagio50;
+                calculatedResult.mensagemPrincipal = calculatedResult.elegivel
+                    ? "Elegível pela Regra de Pedágio 50%. O benefício sofre incidência do fator previdenciário."
+                    : !dentroDoLimitePedagio50
+                        ? "Não elegível: a regra do Pedágio 50% exige que faltassem no máximo 2 anos de contribuição em 13/11/2019."
+                        : "Não elegível pela Regra de Pedágio 50%.";
                 calculatedResult.detalhes = {
-                    tempoContribuicaoAtual: tempoContTotalAnos.toFixed(2),
-                    tempoFaltavaEm13_11_2019: tempoFaltantePedagioTotalAnos.toFixed(2),
-                    pedagioCalculado: pedagio50.toFixed(2),
+                    tempoContribuicaoAtual: formatarAnos(tempoContTotalAnos),
+                    tempoFaltavaEm13_11_2019: formatarAnos(tempoFaltantePedagioTotalAnos),
+                    pedagioCalculado: formatarAnos(pedagio50),
                     tcMinimoOriginal: tcMinPedagio50,
-                    tcNecessarioComPedagio: tcNecessarioPedagio50.toFixed(2),
-                    atendeTcComPedagio: calculatedResult.elegivel,
+                    tcNecessarioComPedagio: formatarAnos(tcNecessarioPedagio50),
+                    faltavamAteDoisAnos: dentroDoLimitePedagio50,
+                    atendeTcComPedagio: atendeTcPedagio50,
                 };
                 break;
 
@@ -222,12 +242,12 @@ export default function AposentadoriaCalculator() {
                 calculatedResult.elegivel = atendeIdadePedagio100 && atendeTcPedagio100;
                 calculatedResult.mensagemPrincipal = calculatedResult.elegivel ? "Elegível pela Regra de Pedágio 100%." : "Não elegível pela Regra de Pedágio 100%.";
                 calculatedResult.detalhes = {
-                    idadeAtual: idadeNum, idadeMinExigida: idadeMinPedagio100, atendeIdadePedagio100,
-                    tempoContribuicaoAtual: tempoContTotalAnos.toFixed(2),
-                    tempoFaltavaEm13_11_2019: tempoFaltantePedagioTotalAnos.toFixed(2),
-                    pedagioCalculado: pedagio100.toFixed(2),
+                    idadeAtual: formatarAnos(idadeNum), idadeMinExigida: idadeMinPedagio100, atendeIdadePedagio100,
+                    tempoContribuicaoAtual: formatarAnos(tempoContTotalAnos),
+                    tempoFaltavaEm13_11_2019: formatarAnos(tempoFaltantePedagioTotalAnos),
+                    pedagioCalculado: formatarAnos(pedagio100),
                     tcMinimoOriginal: tcMinPedagio100,
-                    tcNecessarioComPedagio: tcNecessarioPedagio100.toFixed(2),
+                    tcNecessarioComPedagio: formatarAnos(tcNecessarioPedagio100),
                     atendeTcComPedagio: atendeTcPedagio100,
                 };
                 break;
@@ -254,34 +274,12 @@ export default function AposentadoriaCalculator() {
         return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     };
 
-    // Formatação automática do salário bruto/média salarial
-    const handleSalarioBrutoOuMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-
-        // Remove tudo exceto dígitos
-        const numericValue = value.replace(/[^\d]/g, '');
-
-        if (!numericValue) {
-            setSalarioBrutoOuMedia('');
-            setFormattedSalarioBrutoOuMedia('');
-            return;
+    // Aceita 3000, 3000,50 ou 3.000,50; formata ao sair do campo
+    const handleSalarioBrutoOuMediaBlur = () => {
+        const valor = parseValorBR(salarioBrutoOuMedia);
+        if (!isNaN(valor)) {
+            setSalarioBrutoOuMedia(valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
         }
-
-        // Converte para número - consideramos o valor como reais inteiros, não como centavos
-        const numericAmount = parseInt(numericValue, 10);
-
-        // Atualiza o estado com o valor numérico para cálculos
-        setSalarioBrutoOuMedia(numericAmount.toString());
-
-        // Formata o valor para exibição como moeda brasileira
-        setFormattedSalarioBrutoOuMedia(
-            numericAmount.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            })
-        );
     };
 
     const clearHistory = () => {
@@ -298,8 +296,12 @@ export default function AposentadoriaCalculator() {
                         displayValue = value ? 'Sim' : 'Não';
                     } else if (typeof value === 'number' && (key.toLowerCase().includes('salarial') || key.toLowerCase().includes('valor'))) {
                         displayValue = formatCurrency(value);
-                    } else if (typeof value === 'number' && key.toLowerCase().includes('pontos') || key.toLowerCase().includes('anos') || key.toLowerCase().includes('idade') || key.toLowerCase().includes('tempo')) {
-                        displayValue = `${value} ${key.toLowerCase().includes('pontos') ? 'pontos' : key.toLowerCase().includes('idade') ? 'anos (idade)' : 'anos'}`;
+                    } else if (typeof value === 'number') {
+                        // strings já chegam formatadas (ex.: "35 anos e 6 meses")
+                        const k = key.toLowerCase();
+                        const numero = value.toLocaleString('pt-BR');
+                        if (k.includes('pontos')) displayValue = `${numero} pontos`;
+                        else if (k.includes('idade') || k.includes('tempo') || k.startsWith('tc')) displayValue = `${numero} anos`;
                     }
 
 
@@ -379,8 +381,11 @@ export default function AposentadoriaCalculator() {
 
                                     {tipoCalculo !== 'pedagio50' && ( // Idade não é obrigatória para pedágio 50%
                                         <div>
-                                            <label className="block mb-2 font-medium text-lg text-black">Idade atual (anos):</label>
-                                            <input type="number" value={idade} onChange={(e) => setIdade(e.target.value)} className="border rounded-lg px-4 py-3 w-full text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black" placeholder="Ex: 60" min="0" max="120" />
+                                            <label className="block mb-2 font-medium text-lg text-black">Idade atual:</label>
+                                            <div className="flex space-x-2">
+                                                <input type="number" value={idade} onChange={(e) => setIdade(e.target.value)} className="border rounded-lg px-4 py-3 w-1/2 text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black" placeholder="Anos" min="0" max="120" />
+                                                <input type="number" value={idadeMeses} onChange={(e) => setIdadeMeses(e.target.value)} className="border rounded-lg px-4 py-3 w-1/2 text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black" placeholder="Meses" min="0" max="11" />
+                                            </div>
                                         </div>
                                     )}
 
@@ -394,17 +399,28 @@ export default function AposentadoriaCalculator() {
                                         </div>
                                     </div>
 
+                                    {tipoCalculo === 'idadeUrbana' && genero === 'masculino' && (
+                                        <div className="flex items-center">
+                                            <input type="checkbox" id="filiadoAntesReforma" checked={filiadoAntesReforma} onChange={(e) => setFiliadoAntesReforma(e.target.checked)} className="w-4 h-4 text-green-600" />
+                                            <label htmlFor="filiadoAntesReforma" className="ml-2 text-black">
+                                                Já contribuía para o INSS antes de 13/11/2019 (exige 15 anos de contribuição em vez de 20)
+                                            </label>
+                                        </div>
+                                    )}
+
                                     {tipoCalculo === 'idadeUrbana' && (
                                         <div>
                                             <label className="block mb-2 font-medium text-lg text-black">Informe sua média salarial (R$):</label>
                                             <input
                                                 type="text"
-                                                value={formattedSalarioBrutoOuMedia}
-                                                onChange={handleSalarioBrutoOuMediaChange}
+                                                value={salarioBrutoOuMedia}
+                                                onChange={(e) => setSalarioBrutoOuMedia(e.target.value.replace(/[^\d,.]/g, ''))}
+                                                onBlur={handleSalarioBrutoOuMediaBlur}
+                                                inputMode="decimal"
                                                 className="border rounded-lg px-4 py-3 w-full text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black"
-                                                placeholder="R$ 0,00"
+                                                placeholder="Ex: 3.000,00"
                                             />
-                                            <div className="text-sm text-gray-700 mt-1 flex items-center"><Info className="w-4 h-4 mr-1" />Média de todos os salários a partir de julho de 1994. Digite apenas números.</div>
+                                            <div className="text-sm text-gray-700 mt-1 flex items-center"><Info className="w-4 h-4 mr-1" />Média de todos os salários a partir de julho de 1994 (limitada ao teto do INSS).</div>
                                         </div>
                                     )}
 
@@ -507,7 +523,7 @@ export default function AposentadoriaCalculator() {
                                                 </div>
                                                 {result.percentualTotal !== undefined && (
                                                     <div className="text-xs text-green-700 mt-1">
-                                                        ({result.percentualTotal}% da média salarial)
+                                                        ({result.percentualTotal}% da média salarial, respeitando o piso de um salário mínimo e o teto de {formatCurrency(tetoINSS(ANO_TABELA_INSS))})
                                                     </div>
                                                 )}
                                             </div>
@@ -538,7 +554,7 @@ export default function AposentadoriaCalculator() {
                         Os resultados são apenas uma estimativa e não substituem uma análise individualizada por um profissional do direito previdenciário ou consulta ao INSS.
                     </p>
                     <p className="text-gray-700">
-                        O cálculo do valor do benefício para as regras de transição por tempo de contribuição (pontos, idade mínima progressiva, pedágios) pode variar e, para uma estimativa precisa, considera-se a média de 100% dos salários de contribuição desde julho de 1994, aplicando-se o coeficiente de 60% + 2% por ano de contribuição que exceder 15 anos (mulher) ou 20 anos (homem), exceto para a regra do pedágio de 100% (100% da média) e pedágio de 50% (média multiplicada pelo fator previdenciário). Esta calculadora foca na elegibilidade.
+                        O cálculo do valor do benefício para as regras de transição por tempo de contribuição (pontos, idade mínima progressiva, pedágios) pode variar e, para uma estimativa precisa, considera-se a média de 100% dos salários de contribuição desde julho de 1994, aplicando-se o coeficiente de 60% + 2% por ano de contribuição que exceder 15 anos (mulher) ou 20 anos (homem), sem limite de 100%, exceto para a regra do pedágio de 100% (100% da média) e pedágio de 50% (média multiplicada pelo fator previdenciário). Esta calculadora foca na elegibilidade.
                     </p>
                 </div>
             </div >
