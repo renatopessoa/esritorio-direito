@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ArrowLeft, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
 import { ProcessList } from '../components/processes/ProcessList';
@@ -8,6 +8,7 @@ import { ProcessDetails } from '../components/processes/ProcessDetails';
 import { useProcessStore } from '../stores/useProcessStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { getErrorMessage } from '../lib/axios';
+import { abrirNoJusbrasil } from '../utils/jusbrasil';
 import type { ProcessStatus } from '../types/process';
 
 type View = { name: 'list' } | { name: 'create' } | { name: 'details'; id: string } | { name: 'edit'; id: string };
@@ -122,6 +123,10 @@ export default function Processes() {
               Voltar
             </Button>
             <div className="flex gap-2">
+              <Button variant="outline" onClick={() => abrirNoJusbrasil(selected.number)}>
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Ver no Jusbrasil
+              </Button>
               <Button variant="outline" onClick={() => setView({ name: 'edit', id: selected.id })}>
                 <Pencil className="w-4 h-4 mr-2" />
                 Editar

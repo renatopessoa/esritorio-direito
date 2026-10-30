@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, Calendar, Settings, BarChart, LogOut, UserPlus, Calculator, NotebookText } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Calendar, Settings, BarChart, LogOut, UserPlus, Calculator, NotebookText, SearchCheck } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { toast } from 'sonner';
@@ -8,6 +8,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
   { icon: Users, label: 'Clientes', path: '/app/clients' },
   { icon: Briefcase, label: 'Processos', path: '/app/processes' },
+  { icon: SearchCheck, label: 'Consulta Processual', path: '/app/process-lookup' },
   { icon: Calendar, label: 'Agenda', path: '/app/calendar' },
   { icon: BarChart, label: 'Financeiro', path: '/app/financial' },
   { icon: UserPlus, label: 'Cadastro de Usuário', path: '/app/user-registration' },

@@ -14,6 +14,7 @@ const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Clients = lazy(() => import('./pages/Clients'));
 const Processes = lazy(() => import('./pages/Processes'));
+const ProcessLookup = lazy(() => import('./pages/ProcessLookup'));
 const Documents = lazy(() => import('./pages/Documents'));
 const Calendar = lazy(() => import('./pages/Calendar'));
 const Financial = lazy(() => import('./pages/Financial'));
@@ -66,6 +67,7 @@ function App() {
             <Route path="AposentadoriaCalculator" element={<AposentadoriaCalculator />} />
             <Route path="clients" element={<Clients />} />
             <Route path="processes" element={<Processes />} />
+            <Route path="process-lookup" element={<ProcessLookup />} />
             <Route path="documents" element={<Documents />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="financial" element={<Financial />} />
