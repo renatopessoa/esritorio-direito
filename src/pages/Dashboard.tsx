@@ -4,7 +4,7 @@ import { differenceInCalendarDays, format, isToday, isTomorrow } from 'date-fns'
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Card } from '../components/ui/Card';
-import { LegalNews } from '../components/dashboard/LegalNews';
+import { TodayAgenda } from '../components/dashboard/TodayAgenda';
 import {
   Briefcase,
   Clock,
@@ -152,7 +152,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <LegalNews />
+      <TodayAgenda />
     </div>
   );
 }
